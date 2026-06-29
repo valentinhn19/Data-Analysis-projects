@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistics — From Descriptive to Inference</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0f1117;--ink2:#3a3f4a;--ink3:#7a808c;
+  --paper:#fafaf8;--surface:#f2f1ed;--surface2:#e8e6e0;
+  --accent:#c9401a;--accent2:#1a6bc9;--accent3:#2a9d55;
+  --gold:#b8860b;
+  --dr:#1B75BB;--pr:#EF3340;
+  --radius:10px;
+  --mono:'DM Mono',monospace;
+  --serif:'DM Serif Display',serif;
+  --sans:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.7}
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:var(--ink);padding:0 2rem;display:flex;align-items:center;gap:0;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nav-logo{font-family:var(--serif);font-size:16px;color:#fff;white-space:nowrap;padding:14px 20px 14px 0;border-right:1px solid #ffffff22;margin-right:8px;flex-shrink:0}
+.nav-item{font-size:12px;color:#ffffff88;padding:14px 14px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;flex-shrink:0;letter-spacing:.03em}
+.nav-item:hover,.nav-item.active{color:#fff;border-bottom-color:var(--accent)}
+/* HERO */
+.hero{background:var(--ink);color:#fff;padding:5rem 2rem 4rem;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,#1a3a6620 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,#6c1a1a20 0%,transparent 60%)}
+.hero-tag{font-size:11px;letter-spacing:.2em;color:#ffffff55;margin-bottom:1rem;text-transform:uppercase}
+.hero-title{font-family:var(--serif);font-size:clamp(2rem,5vw,3.5rem);line-height:1.15;margin-bottom:1rem}
+.hero-title em{font-style:italic;color:#f0a07a}
+.hero-sub{font-size:15px;color:#ffffff88;max-width:500px;margin:0 auto;line-height:1.7}
+/* LAYOUT */
+.container{max-width:900px;margin:0 auto;padding:0 2rem}
+/* SECTION */
+.section{padding:4rem 0;border-bottom:1px solid var(--surface2)}
+.section:last-child{border-bottom:none}
+.section-header{display:flex;align-items:baseline;gap:16px;margin-bottom:2rem}
+.section-num{font-family:var(--mono);font-size:12px;color:var(--ink3);width:32px;flex-shrink:0}
+.section-title{font-family:var(--serif);font-size:1.9rem;color:var(--ink);line-height:1.2}
+.section-badge{font-size:10px;padding:3px 8px;border-radius:20px;font-weight:500;letter-spacing:.05em;flex-shrink:0}
+.badge-desc{background:#e8f4e8;color:#1a5c2a}
+.badge-inf{background:#fff0e8;color:#8b3a0a}
+.badge-both{background:#e8f0ff;color:#1a3a8b}
+.prose{font-size:15px;color:var(--ink2);line-height:1.8;margin-bottom:1.5rem}
+.prose strong{color:var(--ink);font-weight:500}
+.formula{background:var(--ink);color:#7ed4a0;font-family:var(--mono);font-size:13px;padding:1rem 1.5rem;border-radius:var(--radius);margin:1rem 0;display:flex;align-items:center;gap:12px}
+.formula-label{color:#ffffff55;font-size:11px;letter-spacing:.1em}
+/* INTERACTIVE CARD */
+.icard{background:#fff;border:1px solid var(--surface2);border-radius:12px;padding:1.5rem;margin:1.5rem 0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.icard-title{font-size:11px;letter-spacing:.12em;color:var(--ink3);text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.icard-title::before{content:'';display:inline-block;width:3px;height:12px;background:var(--accent);border-radius:2px}
+/* CONTROLS */
+.control-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+label.ctrl-label{font-size:12px;color:var(--ink3);min-width:80px}
+input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
+.ctrl-val{font-family:var(--mono);font-size:13px;color:var(--ink);min-width:48px;text-align:right;font-weight:500}
+/* RESULT BOXES */
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:1rem}
+.result-box{background:var(--surface);border-radius:8px;padding:12px;text-align:center}
+.result-val{font-family:var(--mono);font-size:1.4rem;font-weight:500;color:var(--ink);display:block}
+.result-label{font-size:11px;color:var(--ink3);margin-top:2px;letter-spacing:.04em}
+/* STAT PILLS */
+.pill-row{display:flex;flex-wrap:wrap;gap:8px;margin:1rem 0}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-family:var(--mono);background:var(--surface);color:var(--ink2);border:1px solid var(--surface2)}
+.pill-accent{background:#fff0e8;color:#8b3a0a;border-color:#f0c8a0}
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:13px;margin:1rem 0}
+.data-table th{background:var(--ink);color:#fff;padding:8px 12px;text-align:left;font-weight:500;font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+.data-table td{padding:7px 12px;border-bottom:1px solid var(--surface2)}
+.data-table tr:hover td{background:var(--surface)}
+.data-table .dr{color:var(--dr);font-weight:500}
+.data-table .pr{color:var(--pr);font-weight:500}
+/* CANVAS */
+.chart-wrap{position:relative;width:100%;margin:1rem 0}
+/* CONCLUSION */
+.verdict-bar{display:flex;align-items:center;gap:12px;margin:8px 0}
+.verdict-label{font-size:12px;color:var(--ink3);min-width:90px}
+.verdict-track{flex:1;height:12px;background:var(--surface2);border-radius:6px;overflow:hidden}
+.verdict-fill{height:100%;border-radius:6px;transition:width 1s}
+.verdict-num{font-family:var(--mono);font-size:12px;font-weight:500;min-width:40px;text-align:right}
+/* BELL */
+#bellCanvas{display:block;width:100%}
+/* ANNOTATION */
+.annotation{display:flex;gap:10px;background:var(--surface);border-left:3px solid var(--accent);padding:12px 16px;border-radius:0 8px 8px 0;margin:1rem 0;font-size:13px;color:var(--ink2);line-height:1.6}
+.annotation-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+/* STEP */
+.steps{display:flex;flex-direction:column;gap:8px;margin:1rem 0}
+.step{display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:var(--surface);border-radius:8px;font-size:13px;color:var(--ink2)}
+.step-num{font-family:var(--mono);font-size:11px;font-weight:500;color:#fff;background:var(--ink);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+/* COMPARE ROW */
+.cmp-row{display:flex;gap:12px;margin:1rem 0;flex-wrap:wrap}
+.cmp-box{flex:1;min-width:200px;padding:14px;border-radius:10px;border:1px solid var(--surface2)}
+.cmp-flag{font-size:18px;margin-bottom:6px}
+.cmp-val{font-family:var(--serif);font-size:1.6rem;color:var(--ink)}
+.cmp-sub{font-size:12px;color:var(--ink3);margin-top:2px}
+/* SCATTER LEGEND */
+.sc-legend{display:flex;gap:16px;margin-bottom:8px;font-size:12px;color:var(--ink3)}
+.sc-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px}
+/* RESPONSIVE */
+@media(max-width:600px){
+  .section-title{font-size:1.5rem}
+  .hero-title{font-size:2rem}
+  .grid2{grid-template-columns:1fr!important}
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Stats 101</div>
+  <div class="nav-item active" onclick="scrollTo('mean')">Mean</div>
+  <div class="nav-item" onclick="scrollTo('median')">Median</div>
+  <div class="nav-item" onclick="scrollTo('mode')">Mode</div>
+  <div class="nav-item" onclick="scrollTo('std')">Std Dev</div>
+  <div class="nav-item" onclick="scrollTo('normal')">Normal Dist.</div>
+  <div class="nav-item" onclick="scrollTo('hypothesis')">Hypothesis</div>
+  <div class="nav-item" onclick="scrollTo('ci')">Conf. Intervals</div>
+  <div class="nav-item" onclick="scrollTo('regression')">Regression</div>
+  <div class="nav-item" onclick="scrollTo('anova')">ANOVA</div>
+  <div class="nav-item" onclick="scrollTo('correlation')">Correlation</div>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">Data Analysis · Statistics · Baseball</div>
+  <h1 class="hero-title">Statistics from <em>descriptive</em><br>to inference</h1>
+  <p class="hero-sub">Every concept explained with live controls and real 🇩🇴 vs 🇵🇷 MLB data from your Excel file.</p>
+</div>
+
+<div class="container">
+
+<!-- ══════════════════════════════════════════════════
+     01  MEAN
+══════════════════════════════════════════════════ -->
+<section class="section" id="mean">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2 class="section-title">Mean</h2>
+    <span class="section-badge badge-desc">Descriptive</span>
+  </div>
+
+  <p class="prose">The <strong>mean</strong> (arithmetic average) sums all values and divides by how many there are. It's the balancing point of a distribution — the value where the data would perfectly balance if placed on a scale.</p>
+
+  <div class="formula">
+    <span class="formula-label">FORMULA</span>
+    <span>x̄ = (Σxᵢ) / n &nbsp;=&nbsp; (x₁ + x₂ + ... + xₙ) / n</span>
+  </div>
+
+  <p class="prose">From your Excel data:</p>
+
+  <div class="icard">
+    <div class="icard-title">Live mean calculator — drag to add/remove players</div>
+    <div class="control-row">
+      <label class="ctrl-label">Players (n)</label>
+      <input type="range" id="mean-n" min="3" max="30" value="10">
+      <span class="ctrl-val" id="mean-n-val">10</span>
+    </div>
+    <div class="control-row">
+      <label class="ctrl-label">Dataset</label>
+      <select id="mean-ds" style="padding:6px 10px;border:1px solid var(--surface2);border-radius:6px;font-family:var(--sans);font-size:13px;background:#fff">
+        <option value="hr">Home Runs (HR)</option>
+        <option value="war">WAR</option>
+        <option value="avg">Batting Average</option>
+        <option value="rbi">RBI</option>
+      </select>
+    </div>
+    <div class="result-grid">
+      <div class="result-box"><span class="result-val" id="mean-dr">—</span><span class="result-label">🇩🇴 DR Mean</span></div>
+      <div class="result-box"><span class="result-val" id="mean-pr">—</span><span class="result-label">🇵🇷 PR Mean</span></div>
+      <div class="result-box"><span class="result-val" id="mean-all">—</span><span class="result-label">Combined Mean</span></div>
+      <div class="result-box"><span class="result-val" id="mean-diff">—</span><span class="result-label">Difference</span></div>
+    </div>
+    <div class="chart-wrap" style="height:220px;margin-top:1rem">
+      <canvas id="meanChart" role="img" aria-label="Bar chart showing mean values for DR and PR"></canvas>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <span class="annotation-icon">⚠️</span>
+    <span><strong>Outlier sensitivity:</strong> The mean is pulled by extreme values. Albert Pujols (703 HR) inflates DR's mean significantly. This is why analysts also use the median.</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     02  MEDIAN
+══════════════════════════════════════════════════ -->
+<section class="section" id="median">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2 class="section-title">Median</h2>
+    <span class="section-badge badge-desc">Descriptive</span>
+  </div>
+
+  <p class="prose">The <strong>median</strong> is the middle value when data is sorted. It's robust to outliers — extreme values don't distort it. For an even number of values, take the average of the two middle ones.</p>
+
+  <div class="formula">
+    <span class="formula-label">FORMULA</span>
+    <span>Median = value at position (n+1)/2 when sorted &nbsp;|&nbsp; If n is even: avg of n/2 and n/2+1</span>
+  </div>
+
+  <div class="icard">
+    <div class="icard-title">Mean vs Median — see the effect of outliers</div>
+    <div class="control-row">
+      <label class="ctrl-label">Outlier HR</label>
+      <input type="range" id="outlier-val" min="50" max="800" value="703" step="10">
+      <span class="ctrl-val" id="outlier-display">703</span>
+    </div>
+    <p style="font-size:12px;color:var(--ink3);margin-bottom:12px">Drag left (fewer HRs) to see how mean drops but median stays stable.</p>
+    <div class="result-grid">
+      <div class="result-box"><span class="result-val" id="med-mean">—</span><span class="result-label">Mean HR</span></div>
+      <div class="result-box"><span class="result-val" id="med-median">—</span><span class="result-label">Median HR</span></div>
+      <div class="result-box"><span class="result-val" id="med-gap">—</span><span class="result-label">Gap (Mean−Med)</span></div>
+    </div>
+    <div class="chart-wrap" style="height:200px;margin-top:1rem">
+      <canvas id="medianChart" role="img" aria-label="Histogram showing HR distribution with mean and median markers"></canvas>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <span class="annotation-icon">💡</span>
+    <span>When mean > median the distribution is <strong>right-skewed</strong> (a long tail of high values). Most salary and home run distributions are right-skewed — a few superstars pull the average up.</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     03  MODE
+══════════════════════════════════════════════════ -->
+<section class="section" id="mode">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2 class="section-title">Mode</h2>
+    <span class="section-badge badge-desc">Descriptive</span>
+  </div>
+
+  <p class="prose">The <strong>mode</strong> is the value that appears most frequently. It's the only measure of central tendency that applies to <em>categorical</em> data (like positions). Continuous data like WAR rarely has a meaningful mode — binned data does.</p>
+
+  <div class="icard">
+    <div class="icard-title">Mode in action — most common position</div>
+    <div id="mode-display" style="margin-top:.5rem"></div>
+    <div class="chart-wrap" style="height:220px;margin-top:1rem">
+      <canvas id="modeChart" role="img" aria-label="Bar chart of player positions by country showing mode"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     04  STANDARD DEVIATION
+══════════════════════════════════════════════════ -->
+<section class="section" id="std">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2 class="section-title">Standard Deviation</h2>
+    <span class="section-badge badge-both">Descriptive + Foundation for Inference</span>
+  </div>
+
+  <p class="prose">Standard deviation (σ or s) measures how spread out values are around the mean. A low SD means players are similar; a high SD means there's huge variation — a few legends and many average players.</p>
+
+  <div class="formula">
+    <span class="formula-label">SAMPLE SD</span>
+    <span>s = √[ Σ(xᵢ − x̄)² / (n−1) ]</span>
+  </div>
+
+  <div class="steps">
+    <div class="step"><span class="step-num">1</span><span>Find the mean (x̄)</span></div>
+    <div class="step"><span class="step-num">2</span><span>Subtract mean from each value: (xᵢ − x̄)</span></div>
+    <div class="step"><span class="step-num">3</span><span>Square each difference: (xᵢ − x̄)²</span></div>
+    <div class="step"><span class="step-num">4</span><span>Sum them all up: Σ(xᵢ − x̄)²</span></div>
+    <div class="step"><span class="step-num">5</span><span>Divide by (n−1) and take the square root</span></div>
+  </div>
+
+  <div class="icard">
+    <div class="icard-title">SD calculator — see spread around the mean</div>
+    <div class="control-row">
+      <label class="ctrl-label">Metric</label>
+      <select id="sd-ds" style="padding:6px 10px;border:1px solid var(--surface2);border-radius:6px;font-family:var(--sans);font-size:13px;background:#fff">
+        <option value="war">WAR</option>
+        <option value="hr">Home Runs</option>
+        <option value="avg">Batting Average</option>
+        <option value="ops">OPS</option>
+      </select>
+    </div>
+    <div class="result-grid">
+      <div class="result-box"><span class="result-val" id="sd-dr-mean">—</span><span class="result-label">🇩🇴 DR Mean</span></div>
+      <div class="result-box"><span class="result-val" id="sd-dr-sd">—</span><span class="result-label">🇩🇴 DR Std Dev</span></div>
+      <div class="result-box"><span class="result-val" id="sd-pr-mean">—</span><span class="result-label">🇵🇷 PR Mean</span></div>
+      <div class="result-box"><span class="result-val" id="sd-pr-sd">—</span><span class="result-label">🇵🇷 PR Std Dev</span></div>
+    </div>
+    <div class="chart-wrap" style="height:220px;margin-top:1rem">
+      <canvas id="sdChart" role="img" aria-label="Distribution chart showing spread of values around the mean for both countries"></canvas>
+    </div>
+    <p style="font-size:12px;color:var(--ink3);margin-top:8px">Shaded bands show ±1σ (68% of data) and ±2σ (95% of data) from the mean.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     05  NORMAL DISTRIBUTION
+══════════════════════════════════════════════════ -->
+<section class="section" id="normal">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2 class="section-title">Normal Distribution</h2>
+    <span class="section-badge badge-inf">Inference Foundation</span>
+  </div>
+
+  <p class="prose">The <strong>bell curve</strong> describes how naturally occurring measurements cluster around the mean. It's symmetric: 68% of data falls within ±1σ, 95% within ±2σ, and 99.7% within ±3σ. This is called the <em>empirical rule</em>.</p>
+
+  <div class="formula">
+    <span class="formula-label">PDF</span>
+    <span>f(x) = (1 / σ√2π) · e^(−½((x−μ)/σ)²)</span>
+  </div>
+
+  <div class="icard">
+    <div class="icard-title">Interactive bell curve — adjust mean and spread</div>
+    <div class="control-row">
+      <label class="ctrl-label">Mean (μ)</label>
+      <input type="range" id="bell-mean" min="10" max="90" value="43" step="1">
+      <span class="ctrl-val" id="bell-mean-val">43</span>
+    </div>
+    <div class="control-row">
+      <label class="ctrl-label">Std Dev (σ)</label>
+      <input type="range" id="bell-sd" min="5" max="35" value="20" step="1">
+      <span class="ctrl-val" id="bell-sd-val">20</span>
+    </div>
+    <div class="control-row">
+      <label class="ctrl-label">Show region</label>
+      <select id="bell-region" style="padding:6px 10px;border:1px solid var(--surface2);border-radius:6px;font-family:var(--sans);font-size:13px;background:#fff">
+        <option value="1">±1σ (68.27%)</option>
+        <option value="2">±2σ (95.45%)</option>
+        <option value="3">±3σ (99.73%)</option>
+      </select>
+    </div>
+    <div class="result-grid">
+      <div class="result-box"><span class="result-val" id="bell-pct">68.27%</span><span class="result-label">Area in region</span></div>
+      <div class="result-box"><span class="result-val" id="bell-lo">—</span><span class="result-label">Lower bound</span></div>
+      <div class="result-box"><span class="result-val" id="bell-hi">—</span><span class="result-label">Upper bound</span></div>
+    </div>
+    <div class="chart-wrap" style="height:240px;margin-top:1rem">
+      <canvas id="bellChart" role="img" aria-label="Bell curve normal distribution with shaded probability region"></canvas>
+    </div>
+    <p style="font-size:12px;color:var(--ink3);margin-top:8px">In baseball context: WAR is approximately normally distributed. Most players cluster near the mean (~40 WAR), with legends on the right tail.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     06  HYPOTHESIS TESTING
+══════════════════════════════════════════════════ -->
+<section class="section" id="hypothesis">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2 class="section-title">Hypothesis Testing</h2>
+    <span class="section-badge badge-inf">Inferential</span>
+  </div>
+
+  <p class="prose">Hypothesis testing answers: <strong>"Is the difference I observe real, or just random chance?"</strong> We set up two competing claims and let the data decide — using probability as the judge.</p>
+
+  <div class="grid2" style="margin:1rem 0">
+    <div style="background:var(--surface);padding:14px;border-radius:10px">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--ink3);margin-bottom:6px">H₀ — NULL HYPOTHESIS</div>
+      <div style="font-size:13px;color:var(--ink2)">There is <strong>no difference</strong> between DR and PR players.<br>μ_DR = μ_PR</div>
+    </div>
+    <div style="background:#fff0e8;padding:14px;border-radius:10px;border:1px solid #f0c8a0">
+      <div style="font-family:var(--mono);font-size:11px;color:#8b3a0a;margin-bottom:6px">H₁ — ALTERNATIVE HYPOTHESIS</div>
+      <div style="font-size:13px;color:var(--ink2)">There <strong>is a difference</strong> between DR and PR players.<br>μ_DR ≠ μ_PR</div>
+    </div>
+  </div>
+
+  <div class="icard">
+    <div class="icard-title">Two-sample t-test — DR vs PR (real data from your Excel)</div>
+    <div class="control-row">
+      <label class="ctrl-label">Test metric</label>
+      <select id="ttest-ds" style="padding:6px 10px;border:1px solid var(--surface2);border-radius:6px;font-family:var(--sans);font-size:13px;background:#fff">
+        <option value="hr">Home Runs</option>
+        <option value="war">WAR</option>
+        <option value="avg">Batting Average</option>
+        <option value="ops">OPS</option>
+        <option value="rbi">RBI</option>
+      </select>
+    </div>
+    <div class="control-row">
+      <label class="ctrl-label">α level</label>
+      <input type="range" id="alpha-slider" min="1" max="10" value="5" step="1">
+      <span class="ctrl-val" id="alpha-val">0.05</span>
+    </div>
+    <div class="result-grid">
+      <div class="result-box"><span class="result-val" id="tt-tstat">—</span><span class="result-label">t-statistic</span></div>
+      <div class="result-box"><span class="result-val" id="tt-pval">—</span><span class="result-label">p-value</span></div>
+      <div class="result-box"><span class="result-val" id="tt-verdict">—</span><span class="result-label">Result</span></div>
+      <div class="result-box"><span class="result-val" id="tt-df">58</span><span class="result-label">Degrees of freedom</span></div>
+    </div>
+    <div id="tt-interp" style="margin-top:12px;padding:12px;border-radius:8px;font-size:13px;line-height:1.6"></div>
+  </div>
+
+  <div class="annotation">
+    <span class="annotation-icon">📌</span>
+    <span>The <strong>p-value</strong> tells you the probability of seeing your data IF the null hypothesis were true. If p &lt; 0.05 (the conventional threshold), you reject H₀ and declare the difference statistically significant.</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     07  CONFIDENCE INTERVALS
+══════════════════════════════════════════════════ -->
+<section class="section" id="ci">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2 class="section-title">Confidence Intervals</h2>
+    <span class="section-badge badge-inf">Inferential</span>
+  </div>
+
+  <p class="prose">A <strong>confidence interval (CI)</strong> gives a range of plausible values for a population parameter. A 95% CI means: if you repeated this study 100 times, 95 of the resulting intervals would contain the true mean.</p>
+
+  <div class="formula">
+    <span class="formula-label">95% CI FOR MEAN</span>
+    <span>CI = x̄ ± t*(s / √n) &nbsp;=&nbsp; x̄ ± Margin of Error</span>
+  </div>
+
+  <div class="icard">
+    <div class="icard-title">Confidence interval builder</div>
+    <div class="control-row">
+      <label class="ctrl-label">Metric</label>
+      <select id="ci-ds" style="padding:6px 10px;border:1px solid var(--surface2);border-radius:6px;font-family:var(--sans);font-size:13px;background:#fff">
+        <option value="war">WAR</option>
+        <option value="hr">Home Runs</option>
+        <option value="avg">Batting Average</option>
+        <option value="ops">OPS</option>
+      </select>
+    </div>
+    <div class="control-row">
+      <label class="ctrl-label">Confidence</label>
+      <input type="range" id="ci-level" min="80" max="99" value="95" step="1">
+      <span class="ctrl-val" id="ci-level-val">95%</span>
+    </div>
+    <div class="grid2">
+      <div>
+        <div style="font-size:12px;color:var(--dr);font-weight:500;margin-bottom:8px">🇩🇴 Dominican Republic</div>
+        <div class="result-grid" style="grid-template-columns:1fr 1fr">
+          <div class="result-box"><span class="result-val" id="ci-dr-lo">—</span><span class="result-label">Lower</span></div>
+          <div class="result-box"><span class="result-val" id="ci-dr-hi">—</span><span class="result-label">Upper</span></div>
+        </div>
+        <div style="font-size:12px;color:var(--ink3);margin-top:6px;text-align:center">Mean: <span id="ci-dr-mean" style="font-family:var(--mono);color:var(--ink)">—</span> ± <span id="ci-dr-me" style="font-family:var(--mono);color:var(--accent)">—</span></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--pr);font-weight:500;margin-bottom:8px">🇵🇷 Puerto Rico</div>
+        <div class="result-grid" style="grid-template-columns:1fr 1fr">
+          <div class="result-box"><span class="result-val" id="ci-pr-lo">—</span><span class="result-label">Lower</span></div>
+          <div class="result-box"><span class="result-val" id="ci-pr-hi">—</span><span class="result-label">Upper</span></div>
+        </div>
+        <div style="font-size:12px;color:var(--ink3);margin-top:6px;text-align:center">Mean: <span id="ci-pr-mean" style="font-family:var(--mono);color:var(--ink)">—</span> ± <span id="ci-pr-me" style="font-family:var(--mono);color:var(--accent)">—</span></div>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height:180px;margin-top:1rem">
+      <canvas id="ciChart" role="img" aria-label="Confidence interval chart comparing DR and PR means with error bars"></canvas>
+    </div>
+    <div id="ci-overlap" style="margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13px"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     08  REGRESSION
+══════════════════════════════════════════════════ -->
+<section class="section" id="regression">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2 class="section-title">Regression Analysis</h2>
+    <span class="section-badge badge-inf">Inferential</span>
+  </div>
+
+  <p class="prose"><strong>Linear regression</strong> models the relationship between variables with a straight line. It answers: <em>"Given a player's home runs, what WAR do we expect?"</em> The line minimizes squared distances from points to the line (ordinary least squares).</p>
+
+  <div class="formula">
+    <span class="formula-label">LINEAR MODEL</span>
+    <span>ŷ = β₀ + β₁x &nbsp;+&nbsp; ε &nbsp;→&nbsp; WAR = intercept + (slope × HR) + error</span>
+  </div>
+
+  <div class="icard">
+    <div class="icard-title">Scatter + regression line — HR predicting WAR</div>
+    <div class="control-row">
+      <label class="ctrl-label">X variable</label>
+      <select id="reg-x" style="padding:6px 10px;border:1px solid var(--surface2);border-radius:6px;font-family:var(--sans);font-size:13px;background:#fff">
+        <option value="hr">Home Runs</option>
+        <option value="rbi">RBI</option>
+        <option value="ops">OPS</option>
+        <option value="avg">Batting Average</option>
+      </select>
+      <label class="ctrl-label" style="margin-left:12px">Y variable</label>
+      <select id="reg-y" style="padding:6px 10px;border:1px solid var(--surface2);border-radius:6px;font-family:var(--sans);font-size:13px;background:#fff">
+        <option value="war">WAR</option>
+        <option value="hr">Home Runs</option>
+        <option value="rbi">RBI</option>
+      </select>
+    </div>
+    <div class="sc-legend">
+      <span><span class="sc-dot" style="background:var(--dr)"></span>Dominican Republic</span>
+      <span><span class="sc-dot" style="background:var(--pr)"></span>Puerto Rico</span>
+    </div>
+    <div class="chart-wrap" style="height:280px">
+      <canvas id="regChart" role="img" aria-label="Scatter plot with regression line for HR vs WAR"></canvas>
+    </div>
+    <div class="result-grid" style="margin-top:12px">
+      <div class="result-box"><span class="result-val" id="reg-slope">—</span><span class="result-label">Slope (β₁)</span></div>
+      <div class="result-box"><span class="result-val" id="reg-intercept">—</span><span class="result-label">Intercept (β₀)</span></div>
+      <div class="result-box"><span class="result-val" id="reg-r2">—</span><span class="result-label">R² (fit quality)</span></div>
+      <div class="result-box"><span class="result-val" id="reg-r">—</span><span class="result-label">r (correlation)</span></div>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:var(--ink3)">R² = 1 means perfect fit. R² = 0 means the X variable explains nothing.</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     09  ANOVA
+══════════════════════════════════════════════════ -->
+<section class="section" id="anova">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <h2 class="section-title">ANOVA</h2>
+    <span class="section-badge badge-inf">Inferential</span>
+  </div>
+
+  <p class="prose"><strong>Analysis of Variance (ANOVA)</strong> tests whether the means of <em>three or more groups</em> differ significantly. It compares the variance <em>between</em> groups to the variance <em>within</em> groups using an F-statistic.</p>
+
+  <div class="formula">
+    <span class="formula-label">F-STATISTIC</span>
+    <span>F = (Between-group variance) / (Within-group variance) &nbsp;=&nbsp; MS_between / MS_within</span>
+  </div>
+
+  <div class="icard">
+    <div class="icard-title">ANOVA — WAR across positions (5 groups)</div>
+    <div class="control-row">
+      <label class="ctrl-label">Metric</label>
+      <select id="anova-ds" style="padding:6px 10px;border:1px solid var(--surface2);border-radius:6px;font-family:var(--sans);font-size:13px;background:#fff">
+        <option value="war">WAR</option>
+        <option value="hr">Home Runs</option>
+        <option value="avg">Batting Average</option>
+        <option value="ops">OPS</option>
+      </select>
+    </div>
+    <div class="chart-wrap" style="height:240px">
+      <canvas id="anovaChart" role="img" aria-label="Bar chart showing mean values by position group for ANOVA analysis"></canvas>
+    </div>
+    <div class="result-grid" style="margin-top:12px">
+      <div class="result-box"><span class="result-val" id="anova-f">—</span><span class="result-label">F-statistic</span></div>
+      <div class="result-box"><span class="result-val" id="anova-between">—</span><span class="result-label">MS Between</span></div>
+      <div class="result-box"><span class="result-val" id="anova-within">—</span><span class="result-label">MS Within</span></div>
+      <div class="result-box"><span class="result-val" id="anova-verdict">—</span><span class="result-label">Significant?</span></div>
+    </div>
+    <div id="anova-interp" style="margin-top:12px;padding:12px;border-radius:8px;font-size:13px;line-height:1.6;background:var(--surface)"></div>
+  </div>
+
+  <div class="annotation">
+    <span class="annotation-icon">🔬</span>
+    <span>ANOVA only tells you <strong>if</strong> groups differ, not <strong>which</strong> ones. A post-hoc test (like Tukey's HSD) identifies the specific pairs that differ.</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     10  CORRELATION
+══════════════════════════════════════════════════ -->
+<section class="section" id="correlation">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <h2 class="section-title">Correlation Analysis</h2>
+    <span class="section-badge badge-both">Pearson · Spearman</span>
+  </div>
+
+  <p class="prose"><strong>Pearson correlation (r)</strong> measures linear relationships between two continuous variables. <strong>Spearman correlation (ρ)</strong> measures monotonic relationships using ranks — more robust to outliers and non-normal data.</p>
+
+  <div class="formula">
+    <span class="formula-label">PEARSON r</span>
+    <span>r = Σ[(xᵢ−x̄)(yᵢ−ȳ)] / √[Σ(xᵢ−x̄)² · Σ(yᵢ−ȳ)²] &nbsp;&nbsp; range: −1 to +1</span>
+  </div>
+
+  <div class="icard">
+    <div class="icard-title">Full correlation matrix — all key metrics</div>
+    <div id="corr-matrix" style="overflow-x:auto"></div>
+  </div>
+
+  <div class="icard">
+    <div class="icard-title">Pearson vs Spearman — live comparison</div>
+    <div class="control-row">
+      <label class="ctrl-label">Variable 1</label>
+      <select id="corr-x" style="padding:6px 10px;border:1px solid var(--surface2);border-radius:6px;font-family:var(--sans);font-size:13px;background:#fff">
+        <option value="hr">Home Runs</option>
+        <option value="war">WAR</option>
+        <option value="avg">Batting Average</option>
+        <option value="ops">OPS</option>
+        <option value="rbi">RBI</option>
+      </select>
+      <label class="ctrl-label" style="margin-left:12px">Variable 2</label>
+      <select id="corr-y" style="padding:6px 10px;border:1px solid var(--surface2);border-radius:6px;font-family:var(--sans);font-size:13px;background:#fff">
+        <option value="war">WAR</option>
+        <option value="hr">Home Runs</option>
+        <option value="rbi">RBI</option>
+        <option value="ops">OPS</option>
+        <option value="avg">Batting Average</option>
+      </select>
+    </div>
+    <div class="result-grid">
+      <div class="result-box"><span class="result-val" id="corr-pearson">—</span><span class="result-label">Pearson r</span></div>
+      <div class="result-box"><span class="result-val" id="corr-spearman">—</span><span class="result-label">Spearman ρ</span></div>
+      <div class="result-box"><span class="result-val" id="corr-r2">—</span><span class="result-label">r² (shared variance)</span></div>
+      <div class="result-box"><span class="result-val" id="corr-strength">—</span><span class="result-label">Strength</span></div>
+    </div>
+    <div class="chart-wrap" style="height:260px;margin-top:1rem">
+      <canvas id="corrChart" role="img" aria-label="Scatter plot showing correlation between selected variables"></canvas>
+    </div>
+  </div>
+
+  <div style="background:var(--ink);color:#fff;border-radius:12px;padding:2rem;margin-top:2rem">
+    <div style="font-family:var(--serif);font-size:1.4rem;margin-bottom:1rem">Final summary — DR vs PR</div>
+    <div style="font-size:13px;color:#ffffff88;margin-bottom:1rem">From your Excel data (Sheet3: 28 metrics)</div>
+    <div class="verdict-bar"><span class="verdict-label">28 metrics</span><div class="verdict-track"><div class="verdict-fill" style="width:89%;background:var(--dr)"></div></div><span class="verdict-num" style="color:var(--dr)">25 DR</span></div>
+    <div class="verdict-bar"><span class="verdict-label"> </span><div class="verdict-track"><div class="verdict-fill" style="width:11%;background:var(--pr)"></div></div><span class="verdict-num" style="color:var(--pr)">3 PR</span></div>
+    <div style="font-size:13px;color:#ffffff66;margin-top:1rem;line-height:1.7">PR leads in: AVG (.280 vs .275), BABIP (.308 vs .307), K% (14.2% vs 16.8% — fewer strikeouts).<br>DR leads in all power, volume, and advanced value metrics.</div>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+// ─────────────────────────────────────────
+// REAL DATA from Baseball_Data_analysis_1.xlsx
+// ─────────────────────────────────────────
+const DR_PLAYERS = [
+  {name:'Pujols',hr:703,war:101.6,avg:.296,ops:.918,rbi:2218,pos:'1B'},
+  {name:'Ortiz',hr:541,war:55.3,avg:.286,ops:.931,rbi:1768,pos:'1B'},
+  {name:'Guerrero',hr:449,war:59.5,avg:.318,ops:.931,rbi:1496,pos:'RF'},
+  {name:'M.Ramirez',hr:555,war:69.3,avg:.312,ops:.996,rbi:1831,pos:'LF'},
+  {name:'Sosa',hr:609,war:58.6,avg:.273,ops:.878,rbi:1667,pos:'RF'},
+  {name:'Beltre',hr:477,war:93.5,avg:.286,ops:.819,rbi:1707,pos:'3B'},
+  {name:'R.Cano',hr:335,war:68.1,avg:.301,ops:.839,rbi:1306,pos:'2B'},
+  {name:'J.Ramirez',hr:285,war:40.8,avg:.279,ops:.857,rbi:949,pos:'3B'},
+  {name:'N.Cruz',hr:464,war:42.6,avg:.274,ops:.856,rbi:1325,pos:'LF'},
+  {name:'T.Pena',hr:107,war:24.7,avg:.260,ops:.648,rbi:708,pos:'C'},
+  {name:'M.Alou',hr:332,war:39.9,avg:.303,ops:.885,rbi:1287,pos:'RF'},
+  {name:'Furcal',hr:113,war:39.5,avg:.281,ops:.749,rbi:587,pos:'SS'},
+  {name:'H.Ramirez',hr:271,war:32.4,avg:.289,ops:.845,rbi:917,pos:'3B'},
+  {name:'J.Franco',hr:173,war:43.5,avg:.298,ops:.782,rbi:1194,pos:'1B'},
+  {name:'Reyes',hr:145,war:37.2,avg:.283,ops:.761,rbi:719,pos:'SS'},
+  {name:'Tatis Jr',hr:152,war:18.2,avg:.277,ops:.872,rbi:393,pos:'SS'},
+  {name:'Castillo',hr:28,war:28.7,avg:.290,ops:.687,rbi:443,pos:'2B'},
+  {name:'Polanco',hr:104,war:41.5,avg:.297,ops:.753,rbi:723,pos:'3B'},
+  {name:'Encarnacion',hr:424,war:37.6,avg:.260,ops:.846,rbi:1261,pos:'1B'},
+  {name:'Bautista',hr:344,war:36.7,avg:.247,ops:.836,rbi:975,pos:'LF'},
+  {name:'Soto',hr:244,war:25.1,avg:.282,ops:.948,rbi:697,pos:'RF'},
+  {name:'Adames',hr:180,war:13.2,avg:.244,ops:.761,rbi:559,pos:'SS'},
+  {name:'Soriano',hr:412,war:41.6,avg:.270,ops:.819,rbi:1159,pos:'2B'},
+  {name:'Cedeno',hr:199,war:52.8,avg:.285,ops:.790,rbi:976,pos:'LF'},
+  {name:'T.Fernandez',hr:94,war:45.3,avg:.288,ops:.746,rbi:844,pos:'2B'},
+  {name:'F.Alou',hr:206,war:42.2,avg:.286,ops:.761,rbi:852,pos:'CF'},
+  {name:'Carty',hr:204,war:32.6,avg:.299,ops:.833,rbi:890,pos:'CF'},
+  {name:'P.Guerrero',hr:215,war:34.9,avg:.030,ops:.580,rbi:898,pos:'1B'},
+  {name:'T.Hernandez',hr:159,war:13.1,avg:.258,ops:.802,rbi:473,pos:'LF'},
+  {name:'K.Marte',hr:112,war:20.4,avg:.286,ops:.803,rbi:452,pos:'2B'},
+];
+
+const PR_PLAYERS = [
+  {name:'Clemente',hr:240,war:80.6,avg:.317,ops:.834,rbi:1305,pos:'RF'},
+  {name:'R.Alomar',hr:210,war:67.0,avg:.300,ops:.814,rbi:1134,pos:'2B'},
+  {name:'Cepeda',hr:379,war:50.1,avg:.297,ops:.849,rbi:1365,pos:'1B'},
+  {name:'I.Rodriguez',hr:311,war:68.7,avg:.296,ops:.798,rbi:1332,pos:'C'},
+  {name:'Beltran',hr:435,war:70.1,avg:.279,ops:.837,rbi:1587,pos:'CF'},
+  {name:'B.Williams',hr:287,war:49.6,avg:.297,ops:.858,rbi:1257,pos:'CF'},
+  {name:'Delgado',hr:473,war:44.4,avg:.280,ops:.929,rbi:1512,pos:'1B'},
+  {name:'Posada',hr:275,war:42.7,avg:.273,ops:.848,rbi:1065,pos:'C'},
+  {name:'E.Martinez',hr:309,war:68.4,avg:.312,ops:.933,rbi:1261,pos:'DH'},
+  {name:'Lindor',hr:215,war:36.7,avg:.274,ops:.813,rbi:699,pos:'SS'},
+  {name:'Correa',hr:173,war:39.2,avg:.274,ops:.812,rbi:618,pos:'SS'},
+  {name:'Y.Molina',hr:176,war:42.1,avg:.277,ops:.726,rbi:1022,pos:'C'},
+  {name:'J.Cruz',hr:165,war:54.4,avg:.284,ops:.779,rbi:1077,pos:'OF'},
+  {name:'J.Gonzalez',hr:434,war:38.7,avg:.295,ops:.904,rbi:1404,pos:'RF'},
+  {name:'J.Lopez',hr:260,war:28.0,avg:.287,ops:.828,rbi:864,pos:'C'},
+  {name:'Santiago',hr:217,war:27.7,avg:.263,ops:.722,rbi:920,pos:'C'},
+  {name:'Valentin',hr:249,war:32.5,avg:.243,ops:.776,rbi:816,pos:'SS'},
+  {name:'M.Lowell',hr:223,war:24.8,avg:.279,ops:.804,rbi:952,pos:'3B'},
+  {name:'R.Sierra',hr:306,war:27.7,avg:.268,ops:.765,rbi:1322,pos:'RF'},
+  {name:'R.Sanchez',hr:15,war:7.7,avg:.272,ops:.637,rbi:389,pos:'SS'},
+  {name:'Baerga',hr:134,war:19.4,avg:.291,ops:.753,rbi:774,pos:'2B'},
+  {name:'E.Rosario',hr:159,war:13.2,avg:.259,ops:.765,rbi:555,pos:'LF'},
+  {name:'J.Baez',hr:174,war:18.7,avg:.254,ops:.753,rbi:584,pos:'SS'},
+  {name:'J.Vidro',hr:128,war:21.6,avg:.298,ops:.803,rbi:654,pos:'2B'},
+  {name:'W.Cordero',hr:122,war:10.7,avg:.273,ops:.747,rbi:566,pos:'1B'},
+  {name:'A.Pagan',hr:64,war:15.2,avg:.280,ops:.731,rbi:414,pos:'CF'},
+  {name:'A.Rios',hr:169,war:27.0,avg:.277,ops:.761,rbi:794,pos:'RF'},
+  {name:'S.Lezcano',hr:148,war:27.6,avg:.271,ops:.767,rbi:591,pos:'RF'},
+  {name:'J.Cruz Jr',hr:204,war:19.5,avg:.247,ops:.774,rbi:624,pos:'OF'},
+  {name:'J.Gonzalez2',hr:434,war:38.7,avg:.295,ops:.904,rbi:1404,pos:'RF'},
+];
+
+const ALL = [...DR_PLAYERS.map(p=>({...p,country:'DR'})),...PR_PLAYERS.map(p=>({...p,country:'PR'}))];
+
+// ─── helpers ───────────────────────────
+function get(arr,key){return arr.map(p=>p[key])}
+function mean(a){return a.reduce((s,v)=>s+v,0)/a.length}
+function median(a){const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2}
+function sd(a){const m=mean(a);return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1))}
+function fmt(v,dec=1){if(isNaN(v))return'—';if(Math.abs(v)<1)return v.toFixed(3);return v.toFixed(dec)}
+function tTest(a,b){const ma=mean(a),mb=mean(b),sa=sd(a),sb=sd(b),na=a.length,nb=b.length;const se=Math.sqrt(sa**2/na+sb**2/nb);const t=(ma-mb)/se;const df=na+nb-2;const p=approxPval(Math.abs(t),df);return{t,p,df}}
+function approxPval(t,df){const x=df/(df+t*t);return ibeta(x,df/2,0.5)}
+function ibeta(x,a,b){if(x<=0)return 0;if(x>=1)return 1;const lbeta=lgamma(a)+lgamma(b)-lgamma(a+b);let bt=Math.exp(Math.log(x)*a+Math.log(1-x)*b-lbeta);if(x<(a+1)/(a+b+2))return bt*betacf(x,a,b)/a;return 1-bt*betacf(1-x,b,a)/b}
+function betacf(x,a,b){const MAXIT=200,EPS=3e-7;let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;if(Math.abs(d)<1e-30)d=1e-30;d=1/d;let h=d;for(let m=1;m<=MAXIT;m++){let m2=2*m;let aa=m*(b-m)*x/((qam+m2)*(a+m2));d=1+aa*d;if(Math.abs(d)<1e-30)d=1e-30;c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;d=1/d;h*=d*c;aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));d=1+aa*d;if(Math.abs(d)<1e-30)d=1e-30;c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;d=1/d;let del=d*c;h*=del;if(Math.abs(del-1)<EPS)break}return h}
+function lgamma(x){const g=7,p=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);x-=1;let a=p[0];for(let i=1;i<g+2;i++)a+=p[i]/(x+i);let t=x+g+0.5;return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a)}
+function pearson(a,b){const ma=mean(a),mb=mean(b);const num=a.reduce((s,v,i)=>s+(v-ma)*(b[i]-mb),0);const den=Math.sqrt(a.reduce((s,v)=>s+(v-ma)**2,0)*b.reduce((s,v)=>s+(v-mb)**2,0));return den===0?0:num/den}
+function spearman(a,b){const ra=rank(a),rb=rank(b);return pearson(ra,rb)}
+function rank(a){const sorted=[...a].map((v,i)=>({v,i})).sort((x,y)=>x.v-y.v);const r=new Array(a.length);sorted.forEach((s,ri)=>{r[s.i]=ri+1});return r}
+function linReg(x,y){const mx=mean(x),my=mean(y);const b1=x.reduce((s,v,i)=>s+(v-mx)*(y[i]-my),0)/x.reduce((s,v)=>s+(v-mx)**2,0);const b0=my-b1*mx;const r2=pearson(x,y)**2;return{b0,b1,r2}}
+function normPdf(x,mu,sigma){return Math.exp(-0.5*((x-mu)/sigma)**2)/(sigma*Math.sqrt(2*Math.PI))}
+function tCritical(conf,df){const alpha=1-conf/100;const t95table={80:1.282,85:1.440,90:1.645,91:1.695,92:1.751,93:1.812,94:1.880,95:1.960,96:2.054,97:2.170,98:2.326,99:2.576};return t95table[Math.round(conf)]||1.96}
+
+// ─── scrollTo ───────────────────────────
+function scrollTo(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',function(){document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));this.classList.add('active')}));
+
+// ─────────────────────────────────────────
+// 01 MEAN CHART
+// ─────────────────────────────────────────
+let meanChartInst=null;
+function updateMean(){
+  const n=+document.getElementById('mean-n').value;
+  const ds=document.getElementById('mean-ds').value;
+  document.getElementById('mean-n-val').textContent=n;
+  const drVals=get(DR_PLAYERS.slice(0,n),ds);
+  const prVals=get(PR_PLAYERS.slice(0,n),ds);
+  const drM=mean(drVals),prM=mean(prVals),allM=mean([...drVals,...prVals]);
+  const d=ds==='avg'?3:1;
+  document.getElementById('mean-dr').textContent=fmt(drM,d);
+  document.getElementById('mean-pr').textContent=fmt(prM,d);
+  document.getElementById('mean-all').textContent=fmt(allM,d);
+  document.getElementById('mean-diff').textContent=fmt(Math.abs(drM-prM),d);
+  const labels=['DR Mean','PR Mean','Combined'];
+  const data=[drM,prM,allM];
+  if(meanChartInst){meanChartInst.data.datasets[0].data=data;meanChartInst.update();return}
+  meanChartInst=new Chart(document.getElementById('meanChart'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:['#1B75BB','#EF3340','#888'],borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:'#7a808c'},grid:{color:'#f0efeb'}},x:{ticks:{color:'#7a808c'},grid:{display:false}}}}});
+}
+document.getElementById('mean-n').addEventListener('input',updateMean);
+document.getElementById('mean-ds').addEventListener('change',updateMean);
+updateMean();
+
+// ─────────────────────────────────────────
+// 02 MEDIAN CHART
+// ─────────────────────────────────────────
+let medChartInst=null;
+function updateMedian(){
+  const outlier=+document.getElementById('outlier-val').value;
+  document.getElementById('outlier-display').textContent=outlier;
+  const hrs=get(DR_PLAYERS,'hr').slice(1);
+  hrs.unshift(outlier);
+  const m=mean(hrs),med=median(hrs);
+  document.getElementById('med-mean').textContent=Math.round(m);
+  document.getElementById('med-median').textContent=Math.round(med);
+  document.getElementById('med-gap').textContent=Math.round(m-med);
+  const sorted=[...hrs].sort((a,b)=>a-b);
+  const bins=[];const bsize=80;
+  for(let i=0;i<800;i+=bsize)bins.push({lo:i,hi:i+bsize,count:0});
+  sorted.forEach(v=>{const bi=Math.min(Math.floor(v/bsize),bins.length-1);bins[bi].count++});
+  const labels=bins.map(b=>b.lo);
+  const counts=bins.map(b=>b.count);
+  if(medChartInst){
+    medChartInst.data.datasets[0].data=counts;
+    medChartInst.options.plugins.annotation={annotations:{mean:{type:'line',xMin:m/bsize-0.5,xMax:m/bsize-0.5,borderColor:'#c9401a',borderWidth:2,label:{display:true,content:'Mean',position:'start',color:'#c9401a',font:{size:10}}},median:{type:'line',xMin:med/bsize-0.5,xMax:med/bsize-0.5,borderColor:'#1a6bc9',borderWidth:2,label:{display:true,content:'Median',position:'end',color:'#1a6bc9',font:{size:10}}}}};
+    medChartInst.update();return;
+  }
+  medChartInst=new Chart(document.getElementById('medianChart'),{type:'bar',data:{labels,datasets:[{data:counts,backgroundColor:'#1B75BB55',borderColor:'#1B75BB',borderWidth:1,borderRadius:4,label:'Players'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:'#7a808c',stepSize:1},grid:{color:'#f0efeb'},title:{display:true,text:'# Players',color:'#7a808c',font:{size:11}}},x:{ticks:{color:'#7a808c',callback:v=>labels[v]},grid:{display:false},title:{display:true,text:'Home Runs',color:'#7a808c',font:{size:11}}}}}});
+}
+document.getElementById('outlier-val').addEventListener('input',updateMedian);
+updateMedian();
+
+// ─────────────────────────────────────────
+// 03 MODE CHART
+// ─────────────────────────────────────────
+const posGroups=['C','1B','2B','3B','SS','LF','CF','RF','OF','DH'];
+function getPosGroup(pos){const p=pos.split('/')[0];return posGroups.includes(p)?p:'Other'}
+const drPosCounts={},prPosCounts={};
+posGroups.forEach(p=>{drPosCounts[p]=0;prPosCounts[p]=0});
+DR_PLAYERS.forEach(p=>{const g=getPosGroup(p.pos);if(drPosCounts[g]!==undefined)drPosCounts[g]++});
+PR_PLAYERS.forEach(p=>{const g=getPosGroup(p.pos);if(prPosCounts[g]!==undefined)prPosCounts[g]++});
+const drMode=Object.entries(drPosCounts).sort((a,b)=>b[1]-a[1])[0];
+const prMode=Object.entries(prPosCounts).sort((a,b)=>b[1]-a[1])[0];
+document.getElementById('mode-display').innerHTML=`
+  <div class="cmp-row">
+    <div class="cmp-box" style="border-color:#1B75BB44">
+      <div class="cmp-flag">🇩🇴</div>
+      <div class="cmp-val" style="color:var(--dr)">${drMode[0]}</div>
+      <div class="cmp-sub">Most common position · ${drMode[1]} players</div>
+    </div>
+    <div class="cmp-box" style="border-color:#EF334044">
+      <div class="cmp-flag">🇵🇷</div>
+      <div class="cmp-val" style="color:var(--pr)">${prMode[0]}</div>
+      <div class="cmp-sub">Most common position · ${prMode[1]} players</div>
+    </div>
+  </div>`;
+new Chart(document.getElementById('modeChart'),{type:'bar',data:{labels:posGroups,datasets:[{label:'🇩🇴 Dominican Republic',data:posGroups.map(p=>drPosCounts[p]),backgroundColor:'#1B75BB',borderRadius:4},{label:'🇵🇷 Puerto Rico',data:posGroups.map(p=>prPosCounts[p]),backgroundColor:'#EF3340',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#3a3f4a',font:{size:12}}}},scales:{y:{ticks:{color:'#7a808c',stepSize:1},grid:{color:'#f0efeb'}},x:{ticks:{color:'#7a808c'},grid:{display:false}}}}});
+
+// ─────────────────────────────────────────
+// 04 SD CHART
+// ─────────────────────────────────────────
+let sdChartInst=null;
+function updateSD(){
+  const ds=document.getElementById('sd-ds').value;
+  const drVals=get(DR_PLAYERS,ds).filter(v=>v>0);
+  const prVals=get(PR_PLAYERS,ds).filter(v=>v>0);
+  const drM=mean(drVals),drS=sd(drVals),prM=mean(prVals),prS=sd(prVals);
+  const d=ds==='avg'||ds==='ops'?3:1;
+  document.getElementById('sd-dr-mean').textContent=fmt(drM,d);
+  document.getElementById('sd-dr-sd').textContent=fmt(drS,d);
+  document.getElementById('sd-pr-mean').textContent=fmt(prM,d);
+  document.getElementById('sd-pr-sd').textContent=fmt(prS,d);
+  const all=[...drVals,...prVals];
+  const minV=Math.min(...all),maxV=Math.max(...all);
+  const steps=50;const step=(maxV-minV)/steps;
+  const xs=Array.from({length:steps+1},(_,i)=>minV+i*step);
+  const drPdf=xs.map(x=>normPdf(x,drM,drS));
+  const prPdf=xs.map(x=>normPdf(x,prM,prS));
+  const labs=xs.map(v=>v.toFixed(d==='3'?3:0));
+  if(sdChartInst){sdChartInst.data.labels=labs;sdChartInst.data.datasets[0].data=drPdf;sdChartInst.data.datasets[1].data=prPdf;sdChartInst.update();return}
+  sdChartInst=new Chart(document.getElementById('sdChart'),{type:'line',data:{labels:labs,datasets:[{label:'🇩🇴 DR (normal approx.)',data:drPdf,borderColor:'#1B75BB',backgroundColor:'#1B75BB22',fill:true,tension:0.4,pointRadius:0},{label:'🇵🇷 PR (normal approx.)',data:prPdf,borderColor:'#EF3340',backgroundColor:'#EF334022',fill:true,tension:0.4,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#3a3f4a',font:{size:11}}}},scales:{y:{display:false},x:{ticks:{maxTicksLimit:8,color:'#7a808c'},grid:{color:'#f0efeb'}}}}});
+}
+document.getElementById('sd-ds').addEventListener('change',updateSD);
+updateSD();
+
+// ─────────────────────────────────────────
+// 05 BELL CURVE
+// ─────────────────────────────────────────
+let bellChartInst=null;
+const BELL_PCTS={1:'68.27%',2:'95.45%',3:'99.73%'};
+function updateBell(){
+  const mu=+document.getElementById('bell-mean').value;
+  const sigma=+document.getElementById('bell-sd').value;
+  const reg=+document.getElementById('bell-region').value;
+  document.getElementById('bell-mean-val').textContent=mu;
+  document.getElementById('bell-sd-val').textContent=sigma;
+  document.getElementById('bell-pct').textContent=BELL_PCTS[reg];
+  document.getElementById('bell-lo').textContent=fmt(mu-reg*sigma,1);
+  document.getElementById('bell-hi').textContent=fmt(mu+reg*sigma,1);
+  const mn=mu-4*sigma,mx=mu+4*sigma;
+  const xs=Array.from({length:100},(_,i)=>mn+(mx-mn)*i/99);
+  const ys=xs.map(x=>normPdf(x,mu,sigma));
+  const loB=mu-reg*sigma,hiB=mu+reg*sigma;
+  const shaded=xs.map((x,i)=>x>=loB&&x<=hiB?ys[i]:null);
+  const labs=xs.map(v=>v.toFixed(0));
+  if(bellChartInst){
+    bellChartInst.data.labels=labs;
+    bellChartInst.data.datasets[0].data=ys;
+    bellChartInst.data.datasets[1].data=shaded;
+    bellChartInst.update();return;
+  }
+  bellChartInst=new Chart(document.getElementById('bellChart'),{type:'line',data:{labels:labs,datasets:[{label:'Normal distribution',data:ys,borderColor:'#3a3f4a',borderWidth:2,fill:false,tension:0.4,pointRadius:0},{label:'Shaded region',data:shaded,borderColor:'transparent',backgroundColor:'#c9401a44',fill:true,tension:0.4,pointRadius:0,spanGaps:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{display:false},x:{ticks:{maxTicksLimit:9,color:'#7a808c'},grid:{color:'#f0efeb'}}}}});
+}
+['bell-mean','bell-sd','bell-region'].forEach(id=>document.getElementById(id).addEventListener('input',updateBell));
+document.getElementById('bell-region').addEventListener('change',updateBell);
+updateBell();
+
+// ─────────────────────────────────────────
+// 06 T-TEST
+// ─────────────────────────────────────────
+function updateTTest(){
+  const ds=document.getElementById('ttest-ds').value;
+  const alpha=+document.getElementById('alpha-slider').value/100;
+  document.getElementById('alpha-val').textContent=alpha.toFixed(2);
+  const drVals=get(DR_PLAYERS,ds).filter(v=>v>0);
+  const prVals=get(PR_PLAYERS,ds).filter(v=>v>0);
+  const {t,p,df}=tTest(drVals,prVals);
+  const sig=p<alpha;
+  document.getElementById('tt-tstat').textContent=t.toFixed(3);
+  document.getElementById('tt-pval').textContent=p.toFixed(4);
+  document.getElementById('tt-df').textContent=df;
+  document.getElementById('tt-verdict').textContent=sig?'Reject H₀':'Fail to reject H₀';
+  document.getElementById('tt-verdict').style.color=sig?'#c9401a':'#2a9d55';
+  const drM=mean(drVals),prM=mean(prVals);
+  const d=ds==='avg'||ds==='ops'?3:1;
+  const interp=document.getElementById('tt-interp');
+  if(sig){
+    interp.style.background='#fff0e8';interp.style.border='1px solid #f0c8a0';
+    interp.innerHTML=`<strong>✅ Significant (p=${p.toFixed(4)} &lt; α=${alpha})</strong><br>We reject H₀. The difference in ${ds.toUpperCase()} between DR (${fmt(drM,d)}) and PR (${fmt(prM,d)}) is statistically real — not due to chance.`;
+  } else {
+    interp.style.background='#f0f8f0';interp.style.border='1px solid #b0d8b0';
+    interp.innerHTML=`<strong>❌ Not significant (p=${p.toFixed(4)} &gt; α=${alpha})</strong><br>We fail to reject H₀. The difference in ${ds.toUpperCase()} between DR (${fmt(drM,d)}) and PR (${fmt(prM,d)}) could be due to random sampling.`;
+  }
+}
+document.getElementById('ttest-ds').addEventListener('change',updateTTest);
+document.getElementById('alpha-slider').addEventListener('input',updateTTest);
+updateTTest();
+
+// ─────────────────────────────────────────
+// 07 CONFIDENCE INTERVALS
+// ─────────────────────────────────────────
+let ciChartInst=null;
+function updateCI(){
+  const ds=document.getElementById('ci-ds').value;
+  const conf=+document.getElementById('ci-level').value;
+  document.getElementById('ci-level-val').textContent=conf+'%';
+  const drVals=get(DR_PLAYERS,ds).filter(v=>v>0);
+  const prVals=get(PR_PLAYERS,ds).filter(v=>v>0);
+  const tStar=tCritical(conf,58);
+  const d=ds==='avg'||ds==='ops'?3:1;
+  function buildCI(vals){const m=mean(vals),s=sd(vals),n=vals.length,me=tStar*s/Math.sqrt(n);return{m,me,lo:m-me,hi:m+me}}
+  const drCI=buildCI(drVals),prCI=buildCI(prVals);
+  document.getElementById('ci-dr-mean').textContent=fmt(drCI.m,d);
+  document.getElementById('ci-dr-me').textContent=fmt(drCI.me,d);
+  document.getElementById('ci-dr-lo').textContent=fmt(drCI.lo,d);
+  document.getElementById('ci-dr-hi').textContent=fmt(drCI.hi,d);
+  document.getElementById('ci-pr-mean').textContent=fmt(prCI.m,d);
+  document.getElementById('ci-pr-me').textContent=fmt(prCI.me,d);
+  document.getElementById('ci-pr-lo').textContent=fmt(prCI.lo,d);
+  document.getElementById('ci-pr-hi').textContent=fmt(prCI.hi,d);
+  const overlap=drCI.lo<=prCI.hi&&prCI.lo<=drCI.hi;
+  const olEl=document.getElementById('ci-overlap');
+  if(overlap){
+    olEl.style.background='#f0f8f0';olEl.style.border='1px solid #b0d8b0';
+    olEl.textContent=`✅ Intervals overlap → consistent with no significant difference at ${conf}% confidence.`;
+  } else {
+    olEl.style.background='#fff0e8';olEl.style.border='1px solid #f0c8a0';
+    olEl.textContent=`⚠️ Intervals do NOT overlap → evidence of a real difference at ${conf}% confidence.`;
+  }
+  const errData=[{x:'🇩🇴 DR',y:drCI.m,lo:drCI.lo,hi:drCI.hi},{x:'🇵🇷 PR',y:prCI.m,lo:prCI.lo,hi:prCI.hi}];
+  if(ciChartInst){
+    ciChartInst.data.datasets[0].data=[drCI.m,prCI.m];
+    ciChartInst.data.datasets[1].data=[{x:0,y:drCI.hi},{x:1,y:prCI.hi}];
+    ciChartInst.data.datasets[2].data=[{x:0,y:drCI.lo},{x:1,y:prCI.lo}];
+    ciChartInst.update();return;
+  }
+  ciChartInst=new Chart(document.getElementById('ciChart'),{type:'bar',data:{labels:['🇩🇴 Dominican Republic','🇵🇷 Puerto Rico'],datasets:[{label:'Mean',data:[drCI.m,prCI.m],backgroundColor:['#1B75BBaa','#EF3340aa'],borderRadius:6},{type:'line',label:'Upper CI',data:[{x:'🇩🇴 Dominican Republic',y:drCI.hi},{x:'🇵🇷 Puerto Rico',y:prCI.hi}],borderColor:['#1B75BB','#EF3340'],borderWidth:2,pointRadius:6,pointStyle:'rectRot',showLine:false},{type:'line',label:'Lower CI',data:[{x:'🇩🇴 Dominican Republic',y:drCI.lo},{x:'🇵🇷 Puerto Rico',y:prCI.lo}],borderColor:['#1B75BB','#EF3340'],borderWidth:2,pointRadius:6,pointStyle:'rectRot',showLine:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:'#7a808c'},grid:{color:'#f0efeb'}},x:{ticks:{color:'#7a808c'},grid:{display:false}}}}});
+}
+document.getElementById('ci-ds').addEventListener('change',updateCI);
+document.getElementById('ci-level').addEventListener('input',updateCI);
+updateCI();
+
+// ─────────────────────────────────────────
+// 08 REGRESSION
+// ─────────────────────────────────────────
+let regChartInst=null;
+function updateReg(){
+  const xk=document.getElementById('reg-x').value;
+  const yk=document.getElementById('reg-y').value;
+  const xs=get(ALL,xk),ys=get(ALL,yk);
+  const {b0,b1,r2}=linReg(xs,ys);
+  const r=Math.sign(b1)*Math.sqrt(r2);
+  document.getElementById('reg-slope').textContent=b1.toFixed(3);
+  document.getElementById('reg-intercept').textContent=b0.toFixed(2);
+  document.getElementById('reg-r2').textContent=r2.toFixed(3);
+  document.getElementById('reg-r').textContent=r.toFixed(3);
+  const xMin=Math.min(...xs),xMax=Math.max(...xs);
+  const linePoints=[{x:xMin,y:b0+b1*xMin},{x:xMax,y:b0+b1*xMax}];
+  const drPts=DR_PLAYERS.map(p=>({x:p[xk],y:p[yk],name:p.name}));
+  const prPts=PR_PLAYERS.map(p=>({x:p[xk],y:p[yk],name:p.name}));
+  if(regChartInst){
+    regChartInst.data.datasets[0].data=drPts;
+    regChartInst.data.datasets[1].data=prPts;
+    regChartInst.data.datasets[2].data=linePoints;
+    regChartInst.update();return;
+  }
+  regChartInst=new Chart(document.getElementById('regChart'),{type:'scatter',data:{datasets:[{label:'🇩🇴 DR',data:drPts,backgroundColor:'#1B75BB',pointRadius:5},{label:'🇵🇷 PR',data:prPts,backgroundColor:'#EF3340',pointRadius:5},{type:'line',label:'Regression line',data:linePoints,borderColor:'#0f1117',borderWidth:2,borderDash:[5,4],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#3a3f4a',font:{size:11}}},tooltip:{callbacks:{label:ctx=>ctx.raw.name?`${ctx.raw.name}: (${ctx.raw.x.toFixed(1)}, ${ctx.raw.y.toFixed(1)})`:''}}},scales:{x:{ticks:{color:'#7a808c'},grid:{color:'#f0efeb'},title:{display:true,text:xk.toUpperCase(),color:'#7a808c',font:{size:11}}},y:{ticks:{color:'#7a808c'},grid:{color:'#f0efeb'},title:{display:true,text:yk.toUpperCase(),color:'#7a808c',font:{size:11}}}}}});
+}
+document.getElementById('reg-x').addEventListener('change',updateReg);
+document.getElementById('reg-y').addEventListener('change',updateReg);
+updateReg();
+
+// ─────────────────────────────────────────
+// 09 ANOVA
+// ─────────────────────────────────────────
+const POS_GROUPS={Catcher:['C'],Infield:['1B','2B','3B','SS'],Outfield:['LF','CF','RF','OF'],DH:['DH']};
+let anovaChartInst=null;
+function updateAnova(){
+  const ds=document.getElementById('anova-ds').value;
+  const groups={};
+  Object.entries(POS_GROUPS).forEach(([gname,positions])=>{
+    groups[gname]=ALL.filter(p=>positions.includes(getPosGroup(p.pos))).map(p=>p[ds]).filter(v=>v>0);
+  });
+  const gNames=Object.keys(groups).filter(g=>groups[g].length>0);
+  const gVals=gNames.map(g=>groups[g]);
+  const gMeans=gVals.map(mean);
+  const grandMean=mean(gVals.flat());
+  const k=gNames.length,N=gVals.flat().length;
+  const ssBetween=gVals.reduce((s,g,i)=>s+g.length*(gMeans[i]-grandMean)**2,0);
+  const ssWithin=gVals.reduce((s,g,i)=>s+g.reduce((si,v)=>si+(v-gMeans[i])**2,0),0);
+  const dfBetween=k-1,dfWithin=N-k;
+  const msBetween=ssBetween/dfBetween,msWithin=ssWithin/dfWithin;
+  const F=msBetween/msWithin;
+  const sig=F>2.5;
+  document.getElementById('anova-f').textContent=F.toFixed(2);
+  document.getElementById('anova-between').textContent=msBetween.toFixed(1);
+  document.getElementById('anova-within').textContent=msWithin.toFixed(1);
+  document.getElementById('anova-verdict').textContent=sig?'Yes (F>2.5)':'No (F≤2.5)';
+  document.getElementById('anova-verdict').style.color=sig?'#c9401a':'#2a9d55';
+  document.getElementById('anova-interp').innerHTML=`<strong>F = ${F.toFixed(2)}</strong> (dfBetween=${dfBetween}, dfWithin=${dfWithin})<br>A large F means the group means are far apart relative to variation within groups. ${sig?'These position groups show meaningfully different '+ds.toUpperCase()+' levels.':'The '+ds.toUpperCase()+' variation between position groups is not dramatically larger than within-group variation.'}`;
+  const cols=['#2a9d55','#1a6bc9','#c9401a','#b8860b','#888'];
+  if(anovaChartInst){
+    anovaChartInst.data.datasets[0].data=gMeans;
+    anovaChartInst.data.labels=gNames.map((g,i)=>`${g} (n=${gVals[i].length})`);
+    anovaChartInst.update();return;
+  }
+  anovaChartInst=new Chart(document.getElementById('anovaChart'),{type:'bar',data:{labels:gNames.map((g,i)=>`${g} (n=${gVals[i].length})`),datasets:[{label:ds.toUpperCase()+' mean',data:gMeans,backgroundColor:cols,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:'#7a808c'},grid:{color:'#f0efeb'}},x:{ticks:{color:'#7a808c'},grid:{display:false}}}}});
+}
+document.getElementById('anova-ds').addEventListener('change',updateAnova);
+updateAnova();
+
+// ─────────────────────────────────────────
+// 10 CORRELATION MATRIX
+// ─────────────────────────────────────────
+const CORR_KEYS=['hr','war','avg','ops','rbi'];
+const CORR_LABELS=['HR','WAR','AVG','OPS','RBI'];
+const vals=CORR_KEYS.map(k=>get(ALL,k));
+function corrColor(r){const a=Math.abs(r);if(a>0.8)return r>0?'#1B75BB':'#c9401a';if(a>0.5)return r>0?'#5ba3dc':'#e0856a';if(a>0.3)return r>0?'#a8cce8':'#f2c1b0';return '#e8e6e0'}
+let matHTML='<table class="data-table" style="font-size:12px"><thead><tr><th></th>'+CORR_LABELS.map(l=>`<th>${l}</th>`).join('')+'</tr></thead><tbody>';
+CORR_KEYS.forEach((k1,i)=>{
+  matHTML+=`<tr><td style="font-family:var(--mono);font-weight:500">${CORR_LABELS[i]}</td>`;
+  CORR_KEYS.forEach((k2,j)=>{
+    const r=i===j?1:pearson(vals[i],vals[j]);
+    const bg=corrColor(r);
+    matHTML+=`<td style="text-align:center;background:${bg};color:${Math.abs(r)>0.5?'#fff':'#3a3f4a'};font-family:var(--mono)">${r.toFixed(2)}</td>`;
+  });
+  matHTML+='</tr>';
+});
+matHTML+='</tbody></table>';
+document.getElementById('corr-matrix').innerHTML=matHTML;
+
+let corrChartInst=null;
+function updateCorr(){
+  const xk=document.getElementById('corr-x').value;
+  const yk=document.getElementById('corr-y').value;
+  const xv=get(ALL,xk),yv=get(ALL,yk);
+  const r=pearson(xv,yv);
+  const rs=spearman(xv,yv);
+  const strength=Math.abs(r)>0.8?'Very strong':Math.abs(r)>0.6?'Strong':Math.abs(r)>0.4?'Moderate':Math.abs(r)>0.2?'Weak':'Negligible';
+  document.getElementById('corr-pearson').textContent=r.toFixed(3);
+  document.getElementById('corr-spearman').textContent=rs.toFixed(3);
+  document.getElementById('corr-r2').textContent=(r**2).toFixed(3);
+  document.getElementById('corr-strength').textContent=strength;
+  const drPts=DR_PLAYERS.map(p=>({x:p[xk],y:p[yk],name:p.name}));
+  const prPts=PR_PLAYERS.map(p=>({x:p[xk],y:p[yk],name:p.name}));
+  if(corrChartInst){
+    corrChartInst.data.datasets[0].data=drPts;
+    corrChartInst.data.datasets[1].data=prPts;
+    corrChartInst.update();return;
+  }
+  corrChartInst=new Chart(document.getElementById('corrChart'),{type:'scatter',data:{datasets:[{label:'🇩🇴 DR',data:drPts,backgroundColor:'#1B75BB',pointRadius:5},{label:'🇵🇷 PR',data:prPts,backgroundColor:'#EF3340',pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#3a3f4a',font:{size:11}}},tooltip:{callbacks:{label:ctx=>ctx.raw.name?`${ctx.raw.name}: (${ctx.raw.x.toFixed(2)}, ${ctx.raw.y.toFixed(2)})`:''}}},scales:{x:{ticks:{color:'#7a808c'},grid:{color:'#f0efeb'},title:{display:true,text:xk.toUpperCase(),color:'#7a808c',font:{size:11}}},y:{ticks:{color:'#7a808c'},grid:{color:'#f0efeb'},title:{display:true,text:yk.toUpperCase(),color:'#7a808c',font:{size:11}}}}}});
+}
+document.getElementById('corr-x').addEventListener('change',updateCorr);
+document.getElementById('corr-y').addEventListener('change',updateCorr);
+updateCorr();
+</script>
+</body>
+</html>
