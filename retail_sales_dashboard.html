@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ledger &mdash; Retail Sales Analysis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --paper:#FBF6EC;
+    --paper-deep:#F2EAD8;
+    --ink:#241F18;
+    --ink-soft:#5A5142;
+    --rule:#D8CDB4;
+    --stamp-red:#B23A2E;
+    --stamp-red-deep:#8C2C22;
+    --till-green:#3E6B52;
+    --gold:#A8842C;
+    --shadow: 0 1px 0 rgba(36,31,24,0.06);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(180deg, rgba(36,31,24,0.025) 0px, rgba(36,31,24,0.025) 1px, transparent 1px, transparent 28px),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 20px 80px;}
+
+  /* ---------- RECEIPT HEADER ---------- */
+  .receipt{
+    background:var(--paper);
+    border:1px solid var(--rule);
+    margin-top:28px;
+    padding:30px 36px 26px;
+    position:relative;
+    box-shadow:0 10px 30px rgba(36,31,24,0.10);
+  }
+  .receipt::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:-10px; height:20px;
+    background:
+      linear-gradient(135deg, var(--paper) 50%, transparent 50%) 0 0/16px 20px repeat-x,
+      linear-gradient(45deg, var(--paper) 50%, transparent 50%) 0 0/16px 20px repeat-x;
+    filter: drop-shadow(0 2px 1px rgba(36,31,24,0.08));
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--stamp-red); font-weight:600;
+  }
+  h1.title{
+    font-family:'Spectral', serif; font-weight:700;
+    font-size:34px; margin:6px 0 2px; letter-spacing:-0.01em;
+  }
+  .subtitle{ color:var(--ink-soft); font-size:14.5px; margin-bottom:18px;}
+  .kpi-strip{
+    display:grid; grid-template-columns:repeat(5,1fr); gap:0;
+    border-top:1px dashed var(--rule); border-bottom:1px dashed var(--rule);
+    padding:16px 0; margin-top:4px;
+  }
+  .kpi{ text-align:left; padding:0 16px; border-left:1px dashed var(--rule);}
+  .kpi:first-child{border-left:none;}
+  .kpi .num{
+    font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:600; color:var(--ink);
+    display:block;
+  }
+  .kpi .lbl{ font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); margin-top:3px; display:block;}
+  .receipt-foot{
+    display:flex; justify-content:space-between; margin-top:14px;
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft);
+  }
+  .barcode{
+    height:26px; margin-top:10px;
+    background: repeating-linear-gradient(90deg, var(--ink) 0px, var(--ink) 2px, transparent 2px, transparent 5px, var(--ink) 5px, var(--ink) 6px, transparent 6px, transparent 9px);
+    opacity:.78;
+  }
+
+  /* ---------- TABS ---------- */
+  .tabs{
+    display:flex; gap:6px; margin:34px 0 0; position:relative; z-index:1;
+  }
+  .tab{
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; letter-spacing:.04em;
+    padding:11px 20px 10px; cursor:pointer; user-select:none;
+    background:var(--paper-deep); color:var(--ink-soft);
+    border:1px solid var(--rule); border-bottom:none;
+    border-radius:6px 6px 0 0;
+    transition:background .15s, color .15s;
+  }
+  .tab.active{ background:var(--paper); color:var(--ink); font-weight:600;}
+  .tab:hover:not(.active){ color:var(--ink); }
+  .panel-shell{
+    background:var(--paper); border:1px solid var(--rule); border-radius:0 6px 6px 6px;
+    padding:30px 34px 36px; box-shadow:0 10px 30px rgba(36,31,24,0.08);
+  }
+  .panel{ display:none; }
+  .panel.active{ display:block; animation:fade .25s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  h2.section-title{
+    font-family:'Spectral', serif; font-size:22px; font-weight:600; margin:0 0 4px;
+  }
+  p.section-note{ color:var(--ink-soft); font-size:13.5px; margin:0 0 22px; max-width:640px;}
+
+  .grid2{ display:grid; grid-template-columns:1.2fr 1fr; gap:26px; margin-bottom:26px;}
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:26px;}
+  @media(max-width:760px){ .grid2,.grid3{grid-template-columns:1fr;} .kpi-strip{grid-template-columns:repeat(2,1fr); row-gap:14px;} }
+
+  .card{
+    background:var(--paper); border:1px solid var(--rule); border-radius:8px;
+    padding:18px 20px 14px;
+  }
+  .card h3{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; text-transform:uppercase;
+    letter-spacing:.07em; color:var(--ink-soft); margin:0 0 14px; font-weight:600;
+  }
+  .chart-box{ position:relative; height:260px; }
+  .chart-box.tall{ height:320px; }
+
+  table.ledger{ width:100%; border-collapse:collapse; font-size:13px;}
+  table.ledger th{
+    text-align:left; font-family:'IBM Plex Mono', monospace; font-size:10.5px;
+    text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft);
+    border-bottom:1px solid var(--rule); padding:6px 8px;
+  }
+  table.ledger td{ padding:7px 8px; border-bottom:1px dashed var(--rule); }
+  table.ledger tr:last-child td{ border-bottom:none; }
+  table.ledger td.num, table.ledger th.num{ text-align:right; font-family:'IBM Plex Mono', monospace; }
+  .tag{
+    display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:10px;
+    padding:2px 7px; border-radius:20px; border:1px solid currentColor;
+  }
+  .tag.champ{ color:var(--till-green); }
+  .tag.loyal{ color:var(--gold); }
+  .tag.risk{ color:var(--stamp-red); }
+  .tag.new{ color:#3B6F9C; }
+  .tag.attn{ color:#8C5A2B; }
+  .tag.hib{ color:#857C6B; }
+
+  .stat-line{ display:flex; align-items:baseline; gap:8px; margin-bottom:10px;}
+  .stat-line .big{ font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:26px;}
+  .stat-line .small{ color:var(--ink-soft); font-size:12.5px;}
+
+  .insight{
+    border-left:3px solid var(--stamp-red); background:var(--paper-deep);
+    padding:12px 16px; font-size:13px; color:var(--ink); border-radius:0 6px 6px 0; margin-top:4px;
+  }
+  .insight b{ color:var(--stamp-red-deep); }
+
+  footer{
+    text-align:center; color:var(--ink-soft); font-family:'IBM Plex Mono', monospace;
+    font-size:11px; margin-top:30px; letter-spacing:.04em;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="receipt">
+    <span class="eyebrow">Sales Ledger &middot; Annual Statement</span>
+    <h1 class="title">Retail Sales Analysis</h1>
+    <div class="subtitle">UK online retailer &middot; Dec 2010&ndash;Dec 2011 &middot; Customer Segmentation, Sales Trends &amp; Basket Analysis</div>
+    <div class="kpi-strip" id="kpiStrip"></div>
+    <div class="receipt-foot">
+      <span id="footLeft">RECORDS: &mdash;</span>
+      <span id="footRight">CLEANED &amp; VERIFIED</span>
+    </div>
+    <div class="barcode"></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-panel="segments">01 &nbsp;Customer Segments</div>
+    <div class="tab" data-panel="trends">02 &nbsp;Sales Trends</div>
+    <div class="tab" data-panel="basket">03 &nbsp;Basket Analysis</div>
+  </div>
+
+  <div class="panel-shell">
+
+    <!-- ============ SEGMENTS ============ -->
+    <section class="panel active" id="panel-segments">
+      <h2 class="section-title">Who's buying, and how much are they worth?</h2>
+      <p class="section-note">Every customer is scored on Recency, Frequency, and Monetary value (RFM), then sorted into six segments. Revenue is heavily concentrated at the top.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Revenue Share by Segment</h3>
+          <div class="chart-box tall"><canvas id="segRevenueChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Customers by Segment</h3>
+          <div class="chart-box tall"><canvas id="segCustomerChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="insight" id="segInsight" style="margin-bottom:26px;"></div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Segment Detail</h3>
+          <table class="ledger" id="segTable">
+            <thead><tr><th>Segment</th><th class="num">Customers</th><th class="num">Avg Recency</th><th class="num">Avg Freq.</th><th class="num">Avg Spend</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Top 10 Customers by Spend</h3>
+          <table class="ledger" id="topCustTable">
+            <thead><tr><th>ID</th><th class="num">Orders</th><th class="num">Spend</th><th>Segment</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TRENDS ============ -->
+    <section class="panel" id="panel-trends">
+      <h2 class="section-title">Where the year's revenue actually happened</h2>
+      <p class="section-note">Monthly revenue, the weekly and daily rhythm of orders, and which markets matter most.</p>
+
+      <div class="card" style="margin-bottom:26px;">
+        <h3>Monthly Revenue &amp; Orders</h3>
+        <div class="chart-box tall"><canvas id="monthlyChart"></canvas></div>
+      </div>
+
+      <div class="grid3">
+        <div class="card">
+          <h3>Revenue by Day of Week</h3>
+          <div class="chart-box"><canvas id="dowChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Revenue by Hour of Day</h3>
+          <div class="chart-box"><canvas id="hourChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Top Markets by Revenue</h3>
+          <div class="chart-box"><canvas id="countryChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="insight" style="margin-bottom:26px;">
+        This store does not trade on <b>Saturdays</b> &mdash; there isn't a single Saturday transaction in the dataset, so it's omitted from the day-of-week chart rather than shown as a false zero.
+      </div>
+
+      <div class="card">
+        <h3>Top 10 Products by Revenue</h3>
+        <table class="ledger" id="topProductsTable">
+          <thead><tr><th>Code</th><th>Description</th><th class="num">Units</th><th class="num">Revenue</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ BASKET ============ -->
+    <section class="panel" id="panel-basket">
+      <h2 class="section-title">What ends up in the same basket</h2>
+      <p class="section-note">Across 18,405 orders, which products are bought together most often &mdash; and which pairings are most distinctive (high "lift") rather than just popular.</p>
+
+      <div class="grid3" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="card">
+          <div class="stat-line"><span class="big" id="statBaskets">&mdash;</span></div>
+          <div class="small" style="color:var(--ink-soft); font-size:12.5px;">total baskets (invoices)</div>
+        </div>
+        <div class="card">
+          <div class="stat-line"><span class="big" id="statAvgItems">&mdash;</span></div>
+          <div class="small" style="color:var(--ink-soft); font-size:12.5px;">avg. distinct items per basket</div>
+        </div>
+        <div class="card">
+          <div class="stat-line"><span class="big" id="statSingle">&mdash;</span></div>
+          <div class="small" style="color:var(--ink-soft); font-size:12.5px;">single-item baskets</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:26px;">
+        <h3>Basket Size Distribution (1&ndash;20 items)</h3>
+        <div class="chart-box"><canvas id="basketSizeChart"></canvas></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Most Frequently Co-Purchased Pairs</h3>
+          <table class="ledger" id="coPairsTable">
+            <thead><tr><th>Pair</th><th class="num">Times Together</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Strongest Affinity Pairs (by Lift)</h3>
+          <table class="ledger" id="liftPairsTable">
+            <thead><tr><th>Pair</th><th class="num">Lift</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="insight" style="margin-top:22px;">
+        <b>Lift</b> measures how much more often two items are bought together than chance would predict (lift of 1 = no relationship). Pairs like <i>Party Pizza Dish Blue/Pink Polkadot</i> have lift above 300 &mdash; nearly always bought as a matching set, even though they don't appear in many baskets overall.
+      </div>
+    </section>
+
+  </div>
+
+  <footer>RETAIL SALES LEDGER &middot; CLEAN DATA &middot; PYTHON + SQL VERIFIED &middot; END OF STATEMENT</footer>
+</div>
+
+<script>
+const DATA = {"overview": {"total_rows": 396470, "total_revenue": 8767752.65, "unique_customers": 4334, "unique_invoices": 18405, "unique_products": 3660, "date_start": "2010-12-01", "date_end": "2011-12-09", "avg_order_value": 476.38}, "segments": [{"segment": "Champions", "customers": 485, "avg_recency_days": 7.17, "avg_frequency": 15.49, "avg_monetary": 8987.01, "total_revenue": 4358698.22, "pct_customers": 11.2, "pct_revenue": 49.7}, {"segment": "Loyal Customers", "customers": 1031, "avg_recency_days": 22.44, "avg_frequency": 5.19, "avg_monetary": 2058.75, "total_revenue": 2122573.59, "pct_customers": 23.8, "pct_revenue": 24.2}, {"segment": "At Risk", "customers": 453, "avg_recency_days": 104.94, "avg_frequency": 4.67, "avg_monetary": 2076.13, "total_revenue": 940484.85, "pct_customers": 10.5, "pct_revenue": 10.7}, {"segment": "Needs Attention", "customers": 897, "avg_recency_days": 92.38, "avg_frequency": 1.79, "avg_monetary": 793.91, "total_revenue": 712135.05, "pct_customers": 20.7, "pct_revenue": 8.1}, {"segment": "Hibernating", "customers": 1249, "avg_recency_days": 194.28, "avg_frequency": 1.19, "avg_monetary": 283.38, "total_revenue": 353939.45, "pct_customers": 28.8, "pct_revenue": 4.0}, {"segment": "New Customers", "customers": 219, "avg_recency_days": 9.6, "avg_frequency": 1.55, "avg_monetary": 1278.18, "total_revenue": 279921.49, "pct_customers": 5.1, "pct_revenue": 3.2}], "top_customers": [{"customer_id": 14646, "recency": 2, "frequency": 72, "monetary": 279138.02, "segment": "Champions"}, {"customer_id": 18102, "recency": 1, "frequency": 60, "monetary": 259657.3, "segment": "Champions"}, {"customer_id": 17450, "recency": 8, "frequency": 46, "monetary": 194550.79, "segment": "Champions"}, {"customer_id": 16446, "recency": 1, "frequency": 2, "monetary": 168472.5, "segment": "New Customers"}, {"customer_id": 14911, "recency": 1, "frequency": 199, "monetary": 140450.72, "segment": "Champions"}, {"customer_id": 12415, "recency": 24, "frequency": 20, "monetary": 124564.53, "segment": "Loyal Customers"}, {"customer_id": 14156, "recency": 10, "frequency": 55, "monetary": 117379.63, "segment": "Champions"}, {"customer_id": 17511, "recency": 3, "frequency": 31, "monetary": 91062.38, "segment": "Champions"}, {"customer_id": 12346, "recency": 326, "frequency": 1, "monetary": 77183.6, "segment": "Needs Attention"}, {"customer_id": 16029, "recency": 39, "frequency": 62, "monetary": 72882.09, "segment": "Loyal Customers"}], "monthly_trend": [{"year_month": "2010-12", "revenue": 568040.72, "orders": 1395, "customers": 884, "aov": 407.2}, {"year_month": "2011-01", "revenue": 564226.64, "orders": 983, "customers": 739, "aov": 573.98}, {"year_month": "2011-02", "revenue": 443546.02, "orders": 992, "customers": 757, "aov": 447.12}, {"year_month": "2011-03", "revenue": 585262.85, "orders": 1312, "customers": 973, "aov": 446.08}, {"year_month": "2011-04", "revenue": 455666.91, "orders": 1139, "customers": 853, "aov": 400.06}, {"year_month": "2011-05", "revenue": 660917.9, "orders": 1544, "customers": 1054, "aov": 428.06}, {"year_month": "2011-06", "revenue": 654932.56, "orders": 1390, "customers": 990, "aov": 471.17}, {"year_month": "2011-07", "revenue": 593231.9, "orders": 1321, "customers": 946, "aov": 449.08}, {"year_month": "2011-08", "revenue": 637157.24, "orders": 1268, "customers": 933, "aov": 502.49}, {"year_month": "2011-09", "revenue": 941800.81, "orders": 1740, "customers": 1259, "aov": 541.26}, {"year_month": "2011-10", "revenue": 1006342.9, "orders": 1903, "customers": 1361, "aov": 528.82}, {"year_month": "2011-11", "revenue": 1143245.77, "orders": 2642, "customers": 1660, "aov": 432.72}, {"year_month": "2011-12", "revenue": 513380.43, "orders": 776, "customers": 614, "aov": 661.57}], "by_dow": [{"dow": "Monday", "revenue": 1330882.49, "orders": 2831}, {"dow": "Tuesday", "revenue": 1676518.95, "orders": 3158}, {"dow": "Wednesday", "revenue": 1564571.59, "orders": 3436}, {"dow": "Thursday", "revenue": 1944933.25, "orders": 4003}, {"dow": "Friday", "revenue": 1463583.67, "orders": 2809}, {"dow": "Saturday", "revenue": null, "orders": null}, {"dow": "Sunday", "revenue": 787262.7, "orders": 2168}], "by_hour": [{"hour": 6, "revenue": 4.25, "orders": 1}, {"hour": 7, "revenue": 30519.21, "orders": 29}, {"hour": 8, "revenue": 278112.63, "orders": 554}, {"hour": 9, "revenue": 829944.37, "orders": 1384}, {"hour": 10, "revenue": 1245110.48, "orders": 2205}, {"hour": 11, "revenue": 1088154.16, "orders": 2263}, {"hour": 12, "revenue": 1366931.91, "orders": 3118}, {"hour": 13, "revenue": 1143843.35, "orders": 2623}, {"hour": 14, "revenue": 972138.98, "orders": 2251}, {"hour": 15, "revenue": 950351.64, "orders": 2021}, {"hour": 16, "revenue": 462252.7, "orders": 1088}, {"hour": 17, "revenue": 228756.83, "orders": 539}, {"hour": 18, "revenue": 104476.09, "orders": 169}, {"hour": 19, "revenue": 48224.74, "orders": 143}, {"hour": 20, "revenue": 18931.31, "orders": 18}], "top_countries": [{"country": "United Kingdom", "revenue": 7267337.23, "customers": 3916}, {"country": "Netherlands", "revenue": 283889.34, "customers": 9}, {"country": "EIRE", "revenue": 262171.56, "customers": 3}, {"country": "Germany", "revenue": 205569.89, "customers": 94}, {"country": "France", "revenue": 184077.68, "customers": 87}, {"country": "Australia", "revenue": 138171.31, "customers": 9}, {"country": "Spain", "revenue": 55725.11, "customers": 30}, {"country": "Switzerland", "revenue": 52441.95, "customers": 21}, {"country": "Japan", "revenue": 37416.37, "customers": 8}, {"country": "Belgium", "revenue": 36927.34, "customers": 25}], "top_products": [{"stock_code": "23843", "description": "PAPER CRAFT , LITTLE BIRDIE", "revenue": 168469.6, "units": 80995}, {"stock_code": "22423", "description": "REGENCY CAKESTAND 3 TIER", "revenue": 142592.95, "units": 12402}, {"stock_code": "85123A", "description": "WHITE HANGING HEART T-LIGHT HOLDER", "revenue": 100448.15, "units": 36725}, {"stock_code": "85099B", "description": "JUMBO BAG RED RETROSPOT", "revenue": 85220.78, "units": 46181}, {"stock_code": "23166", "description": "MEDIUM CERAMIC TOP STORAGE JAR", "revenue": 81416.73, "units": 77916}, {"stock_code": "47566", "description": "PARTY BUNTING", "revenue": 68844.33, "units": 15291}, {"stock_code": "84879", "description": "ASSORTED COLOUR BIRD ORNAMENT", "revenue": 56580.34, "units": 35362}, {"stock_code": "23084", "description": "RABBIT NIGHT LIGHT", "revenue": 51346.2, "units": 27202}, {"stock_code": "79321", "description": "CHILLI LIGHTS", "revenue": 46286.51, "units": 9650}, {"stock_code": "22086", "description": "PAPER CHAIN KIT 50'S CHRISTMAS", "revenue": 42660.83, "units": 15617}], "basket_overview": {"total_baskets": 18405, "avg_items_per_basket": 20.99, "single_item_pct": 7.2}, "basket_size_dist": [{"size": 1, "count": 1316}, {"size": 2, "count": 719}, {"size": 3, "count": 638}, {"size": 4, "count": 639}, {"size": 5, "count": 647}, {"size": 6, "count": 597}, {"size": 7, "count": 587}, {"size": 8, "count": 590}, {"size": 9, "count": 611}, {"size": 10, "count": 534}, {"size": 11, "count": 527}, {"size": 12, "count": 496}, {"size": 13, "count": 489}, {"size": 14, "count": 508}, {"size": 15, "count": 550}, {"size": 16, "count": 533}, {"size": 17, "count": 451}, {"size": 18, "count": 449}, {"size": 19, "count": 480}, {"size": 20, "count": 423}], "top_pairs_by_cooccurrence": [{"item_a": "JUMBO BAG PINK POLKADOT", "item_b": "JUMBO BAG RED RETROSPOT", "co_occurrences": 546, "support": 0.0297, "lift": 7.21}, {"item_a": "GREEN REGENCY TEACUP AND SAUCER", "item_b": "ROSES REGENCY TEACUP AND SAUCER", "co_occurrences": 541, "support": 0.0294, "lift": 18.4}, {"item_a": "ALARM CLOCK BAKELIKE GREEN", "item_b": "ALARM CLOCK BAKELIKE RED", "co_occurrences": 530, "support": 0.0288, "lift": 14.1}, {"item_a": "LUNCH BAG PINK POLKADOT", "item_b": "LUNCH BAG RED RETROSPOT", "co_occurrences": 523, "support": 0.0284, "lift": 8.03}, {"item_a": "LUNCH BAG  BLACK SKULL.", "item_b": "LUNCH BAG RED RETROSPOT", "co_occurrences": 517, "support": 0.0281, "lift": 7.02}, {"item_a": "WOODEN FRAME ANTIQUE WHITE", "item_b": "WOODEN PICTURE FRAME WHITE FINISH", "co_occurrences": 468, "support": 0.0254, "lift": 12.12}, {"item_a": "LUNCH BAG RED RETROSPOT", "item_b": "LUNCH BAG SPACEBOY DESIGN", "co_occurrences": 467, "support": 0.0254, "lift": 6.75}, {"item_a": "LUNCH BAG  BLACK SKULL.", "item_b": "LUNCH BAG PINK POLKADOT", "co_occurrences": 464, "support": 0.0252, "lift": 8.72}, {"item_a": "GARDENERS KNEELING PAD CUP OF TEA", "item_b": "GARDENERS KNEELING PAD KEEP CALM", "co_occurrences": 463, "support": 0.0252, "lift": 17.75}, {"item_a": "GREEN REGENCY TEACUP AND SAUCER", "item_b": "PINK REGENCY TEACUP AND SAUCER", "co_occurrences": 460, "support": 0.025, "lift": 22.04}, {"item_a": "LUNCH BAG CARS BLUE", "item_b": "LUNCH BAG RED RETROSPOT", "co_occurrences": 458, "support": 0.0249, "lift": 6.77}, {"item_a": "RED HANGING HEART T-LIGHT HOLDER", "item_b": "WHITE HANGING HEART T-LIGHT HOLDER", "co_occurrences": 455, "support": 0.0247, "lift": 6.26}, {"item_a": "PAPER CHAIN KIT 50'S CHRISTMAS", "item_b": "PAPER CHAIN KIT VINTAGE CHRISTMAS", "co_occurrences": 451, "support": 0.0245, "lift": 12.15}, {"item_a": "LUNCH BAG RED RETROSPOT", "item_b": "LUNCH BAG SUKI DESIGN", "co_occurrences": 450, "support": 0.0244, "lift": 7.15}, {"item_a": "PINK REGENCY TEACUP AND SAUCER", "item_b": "ROSES REGENCY TEACUP AND SAUCER", "co_occurrences": 436, "support": 0.0237, "lift": 18.43}], "top_pairs_by_lift": [{"item_a": "PARTY PIZZA DISH BLUE POLKADOT", "item_b": "PARTY PIZZA DISH PINK POLKADOT", "co_occurrences": 32, "lift": 312.28, "confidence_a_to_b": 0.7805}, {"item_a": "ENAMEL PINK COFFEE CONTAINER", "item_b": "ENAMEL PINK TEA CONTAINER", "co_occurrences": 33, "lift": 292.0, "confidence_a_to_b": 0.6346}, {"item_a": "LANDMARK FRAME COVENT GARDEN", "item_b": "LANDMARK FRAME OXFORD STREET", "co_occurrences": 40, "lift": 262.18, "confidence_a_to_b": 0.7692}, {"item_a": "METAL SIGN CUPCAKE SINGLE HOOK", "item_b": "METAL SIGN,CUPCAKE SINGLE HOOK", "co_occurrences": 38, "lift": 229.31, "confidence_a_to_b": 0.76}, {"item_a": "LANDMARK FRAME COVENT GARDEN", "item_b": "LANDMARK FRAME NOTTING HILL", "co_occurrences": 31, "lift": 228.59, "confidence_a_to_b": 0.5962}, {"item_a": "CHILDS GARDEN BRUSH BLUE", "item_b": "CHILDS GARDEN BRUSH PINK", "co_occurrences": 45, "lift": 223.54, "confidence_a_to_b": 0.7895}, {"item_a": "KIDS RAIN MAC BLUE", "item_b": "KIDS RAIN MAC PINK", "co_occurrences": 53, "lift": 220.59, "confidence_a_to_b": 0.803}, {"item_a": "BLUE PUDDING SPOON", "item_b": "RED PUDDING SPOON", "co_occurrences": 33, "lift": 218.16, "confidence_a_to_b": 0.569}, {"item_a": "SET/6 FRUIT SALAD  PAPER PLATES", "item_b": "SET/6 FRUIT SALAD PAPER CUPS", "co_occurrences": 60, "lift": 213.19, "confidence_a_to_b": 0.8571}, {"item_a": "LANDMARK FRAME NOTTING HILL", "item_b": "LANDMARK FRAME OXFORD STREET", "co_occurrences": 30, "lift": 213.02, "confidence_a_to_b": 0.625}, {"item_a": "CHILDRENS GARDEN GLOVES BLUE", "item_b": "CHILDRENS GARDEN GLOVES PINK", "co_occurrences": 38, "lift": 206.92, "confidence_a_to_b": 0.5846}, {"item_a": "CHILDS GARDEN RAKE BLUE", "item_b": "CHILDS GARDEN SPADE BLUE", "co_occurrences": 34, "lift": 203.5, "confidence_a_to_b": 0.8293}, {"item_a": "CHILDS GARDEN SPADE BLUE", "item_b": "CHILDS GARDEN SPADE PINK", "co_occurrences": 52, "lift": 202.55, "confidence_a_to_b": 0.6933}, {"item_a": "CHRISTMAS MUSICAL ZINC STAR", "item_b": "CHRISTMAS MUSICAL ZINC TREE", "co_occurrences": 39, "lift": 201.06, "confidence_a_to_b": 0.5571}, {"item_a": "REGENCY CAKE FORK", "item_b": "REGENCY TEA SPOON", "co_occurrences": 44, "lift": 198.49, "confidence_a_to_b": 0.6471}]};
+
+const inkSoft = '#5A5142';
+const palette = {
+  champ:'#3E6B52', loyal:'#A8842C', risk:'#B23A2E', attn:'#8C5A2B', hib:'#857C6B', new:'#3B6F9C'
+};
+const segColor = (s) => ({
+  'Champions': palette.champ, 'Loyal Customers': palette.loyal, 'At Risk': palette.risk,
+  'Needs Attention': palette.attn, 'Hibernating': palette.hib, 'New Customers': palette.new
+}[s] || '#888');
+const segTagClass = (s) => ({
+  'Champions':'champ','Loyal Customers':'loyal','At Risk':'risk','Needs Attention':'attn','Hibernating':'hib','New Customers':'new'
+}[s] || '');
+
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = inkSoft;
+Chart.defaults.borderColor = '#E4DAC4';
+
+function fmtMoney(v){
+  if (v >= 1000000) return '£' + (v/1000000).toFixed(2) + 'M';
+  if (v >= 1000) return '£' + (v/1000).toFixed(1) + 'k';
+  return '£' + v.toFixed(0);
+}
+function fmtNum(v){ return v.toLocaleString(); }
+
+// ---------------- KPI strip ----------------
+const ov = DATA.overview;
+const kpis = [
+  [fmtMoney(ov.total_revenue), 'Total Revenue'],
+  [fmtNum(ov.unique_customers), 'Customers'],
+  [fmtNum(ov.unique_invoices), 'Orders'],
+  [fmtMoney(ov.avg_order_value), 'Avg Order Value'],
+  [fmtNum(ov.unique_products), 'Products Sold'],
+];
+document.getElementById('kpiStrip').innerHTML = kpis.map(([num,lbl]) =>
+  `<div class="kpi"><span class="num">${num}</span><span class="lbl">${lbl}</span></div>`).join('');
+document.getElementById('footLeft').textContent = `RECORDS: ${fmtNum(ov.total_rows)} LINE ITEMS`;
+document.getElementById('footRight').textContent = `${ov.date_start} \u2192 ${ov.date_end}`;
+
+// ---------------- Tabs ----------------
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+  });
+});
+
+// ---------------- Segments ----------------
+const segs = DATA.segments;
+new Chart(document.getElementById('segRevenueChart'), {
+  type:'doughnut',
+  data:{
+    labels: segs.map(s=>s.segment),
+    datasets:[{ data: segs.map(s=>s.total_revenue), backgroundColor: segs.map(s=>segColor(s.segment)), borderColor:'#FBF6EC', borderWidth:2 }]
+  },
+  options:{
+    plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11} } },
+      tooltip:{ callbacks:{ label: ctx => `${ctx.label}: ${fmtMoney(ctx.parsed)} (${segs[ctx.dataIndex].pct_revenue}%)` } } },
+    maintainAspectRatio:false
+  }
+});
+new Chart(document.getElementById('segCustomerChart'), {
+  type:'bar',
+  data:{
+    labels: segs.map(s=>s.segment),
+    datasets:[{ data: segs.map(s=>s.customers), backgroundColor: segs.map(s=>segColor(s.segment)), borderRadius:4, maxBarThickness:34 }]
+  },
+  options:{
+    indexAxis:'y',
+    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx => `${fmtNum(ctx.parsed.x)} customers (${segs[ctx.dataIndex].pct_customers}%)` } } },
+    scales:{ x:{ grid:{ color:'#E4DAC4' } }, y:{ grid:{ display:false } } },
+    maintainAspectRatio:false
+  }
+});
+
+const champ = segs.find(s=>s.segment==='Champions');
+document.getElementById('segInsight').innerHTML =
+  `<b>Champions</b> are just ${champ.pct_customers}% of customers but drive <b>${champ.pct_revenue}%</b> of all revenue &mdash; averaging ${fmtMoney(champ.avg_monetary)} per customer with a purchase as recently as ${champ.avg_recency_days.toFixed(0)} days ago on average. Retaining this small group matters more than acquiring new ones.`;
+
+document.querySelector('#segTable tbody').innerHTML = segs.map(s => `
+  <tr>
+    <td><span class="tag ${segTagClass(s.segment)}">${s.segment}</span></td>
+    <td class="num">${fmtNum(s.customers)}</td>
+    <td class="num">${s.avg_recency_days.toFixed(0)}d</td>
+    <td class="num">${s.avg_frequency.toFixed(1)}</td>
+    <td class="num">${fmtMoney(s.avg_monetary)}</td>
+  </tr>`).join('');
+
+document.querySelector('#topCustTable tbody').innerHTML = DATA.top_customers.map(c => `
+  <tr>
+    <td>#${c.customer_id}</td>
+    <td class="num">${c.frequency}</td>
+    <td class="num">${fmtMoney(c.monetary)}</td>
+    <td><span class="tag ${segTagClass(c.segment)}">${c.segment}</span></td>
+  </tr>`).join('');
+
+// ---------------- Trends ----------------
+const monthly = DATA.monthly_trend;
+new Chart(document.getElementById('monthlyChart'), {
+  data:{
+    labels: monthly.map(m=>m.year_month),
+    datasets:[
+      { type:'bar', label:'Revenue', data: monthly.map(m=>m.revenue), backgroundColor:'#C8B98E', borderRadius:3, yAxisID:'y', order:2 },
+      { type:'line', label:'Orders', data: monthly.map(m=>m.orders), borderColor:'#B23A2E', backgroundColor:'#B23A2E', tension:.3, yAxisID:'y1', pointRadius:3, order:1 }
+    ]
+  },
+  options:{
+    maintainAspectRatio:false,
+    interaction:{ mode:'index', intersect:false },
+    plugins:{ legend:{ position:'bottom', labels:{boxWidth:10, font:{size:11}} },
+      tooltip:{ callbacks:{ label: ctx => ctx.dataset.label==='Revenue' ? `Revenue: ${fmtMoney(ctx.parsed.y)}` : `Orders: ${fmtNum(ctx.parsed.y)}` } } },
+    scales:{
+      y:{ position:'left', grid:{color:'#E4DAC4'}, ticks:{ callback: v => fmtMoney(v) } },
+      y1:{ position:'right', grid:{display:false}, ticks:{ callback: v => fmtNum(v) } },
+      x:{ grid:{display:false} }
+    }
+  }
+});
+
+const dow = DATA.by_dow.filter(d => d.revenue !== null);
+new Chart(document.getElementById('dowChart'), {
+  type:'bar',
+  data:{ labels: dow.map(d=>d.dow.slice(0,3)), datasets:[{ data: dow.map(d=>d.revenue), backgroundColor:'#3E6B52', borderRadius:4, maxBarThickness:30 }] },
+  options:{ maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtMoney(ctx.parsed.y)}}},
+    scales:{ y:{ grid:{color:'#E4DAC4'}, ticks:{callback:v=>fmtMoney(v)} }, x:{grid:{display:false}} } }
+});
+
+const hr = DATA.by_hour;
+new Chart(document.getElementById('hourChart'), {
+  type:'bar',
+  data:{ labels: hr.map(h=>h.hour+':00'), datasets:[{ data: hr.map(h=>h.revenue), backgroundColor:'#A8842C', borderRadius:3, maxBarThickness:18 }] },
+  options:{ maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtMoney(ctx.parsed.y)}}},
+    scales:{ y:{ grid:{color:'#E4DAC4'}, ticks:{callback:v=>fmtMoney(v)} }, x:{grid:{display:false}, ticks:{maxRotation:0, autoSkip:true, maxTicksLimit:8} } } }
+});
+
+const ctry = DATA.top_countries.slice(0,7);
+new Chart(document.getElementById('countryChart'), {
+  type:'bar',
+  data:{ labels: ctry.map(c=>c.country), datasets:[{ data: ctry.map(c=>c.revenue), backgroundColor:'#B23A2E', borderRadius:4, maxBarThickness:18 }] },
+  options:{ indexAxis:'y', maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtMoney(ctx.parsed.x)}}},
+    scales:{ x:{ grid:{color:'#E4DAC4'}, ticks:{callback:v=>fmtMoney(v)} }, y:{grid:{display:false}} } }
+});
+
+document.querySelector('#topProductsTable tbody').innerHTML = DATA.top_products.map(p => `
+  <tr><td>${p.stock_code}</td><td>${p.description}</td><td class="num">${fmtNum(p.units)}</td><td class="num">${fmtMoney(p.revenue)}</td></tr>
+`).join('');
+
+// ---------------- Basket ----------------
+const bo = DATA.basket_overview;
+document.getElementById('statBaskets').textContent = fmtNum(bo.total_baskets);
+document.getElementById('statAvgItems').textContent = bo.avg_items_per_basket.toFixed(1);
+document.getElementById('statSingle').textContent = bo.single_item_pct + '%';
+
+const bsd = DATA.basket_size_dist;
+new Chart(document.getElementById('basketSizeChart'), {
+  type:'bar',
+  data:{ labels: bsd.map(d=>d.size), datasets:[{ data: bsd.map(d=>d.count), backgroundColor:'#3E6B52', borderRadius:3, maxBarThickness:24 }] },
+  options:{ maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtNum(ctx.parsed.y)+' baskets'}}},
+    scales:{ y:{ grid:{color:'#E4DAC4'} }, x:{ grid:{display:false}, title:{display:true, text:'distinct items in basket', color:inkSoft, font:{size:11}} } } }
+});
+
+document.querySelector('#coPairsTable tbody').innerHTML = DATA.top_pairs_by_cooccurrence.slice(0,10).map(p => `
+  <tr><td>${p.item_a} <span style="color:var(--ink-soft)">+</span> ${p.item_b}</td><td class="num">${fmtNum(p.co_occurrences)}</td></tr>
+`).join('');
+
+document.querySelector('#liftPairsTable tbody').innerHTML = DATA.top_pairs_by_lift.slice(0,10).map(p => `
+  <tr><td>${p.item_a} <span style="color:var(--ink-soft)">+</span> ${p.item_b}</td><td class="num">${p.lift.toFixed(1)}&times;</td></tr>
+`).join('');
+</script>
+</body>
+</html>
